@@ -1,0 +1,166 @@
+body,
+html {
+  height: auto;
+  overflow: auto;
+  min-height: 100vh;
+}
+
+body[theme="dark"] {
+  background-color: #0a0a0a;
+  color: #e8eaf0;
+}
+
+body[theme="sepia"] {
+  background-color: rgb(247, 231, 199);
+  color: rgba(80, 55, 35, 1);
+}
+
+#auto-redirect-banner {
+  max-width: 680px;
+  margin: 1.5em auto;
+  border: 1px solid rgba(20, 24, 40, 0.12);
+  padding: 0.75em 1em;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.8);
+  color: #1b1e29;
+}
+
+@media all and (max-width: 800px) {
+  /* make sure there is room for the settings button */
+  #auto-redirect-banner {
+    margin-right: 4em;
+    margin-left: 0.5em;
+  }
+}
+
+body[theme="dark"] #auto-redirect-banner {
+  color: #e8eaf0;
+  background: #141414;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+body[theme="sepia"] #auto-redirect-banner {
+  color: rgba(0, 0, 0, 0.75);
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+#auto-redirect-button-area {
+  float: right;
+  padding-right: 0.5em;
+}
+
+#auto-redirect-button-area button {
+  padding: 0.4em 0.8em;
+  margin-top: -0.2em;
+  color: #667085;
+  border-radius: 6px;
+  cursor: pointer;
+}
+body[theme="dark"] #auto-redirect-button-area button {
+  color: #8e8e93;
+}
+
+#auto-redirect-button-area button.primary {
+  color: #1b1e29;
+  font-weight: 600;
+}
+
+body[theme="dark"] #auto-redirect-button-area button.primary {
+  color: #ffffff;
+}
+
+#auto-redirect-button-area button:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+body[theme="dark"] #auto-redirect-button-area button:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+#backtoarticle {
+  max-width: 680px;
+  margin: auto;
+  padding-top: 1.5em;
+}
+#backtoarticle-link {
+  color: #1b1e29;
+  cursor: pointer;
+  font-family: system-ui, -apple-system, sans-serif;
+  display: inline-block;
+  padding: 0.5em 0;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+body[theme="dark"] #backtoarticle-link {
+  color: #ffffff;
+}
+
+#backtoarticle-link span {
+  font-size: 1.25em;
+  vertical-align: bottom;
+}
+
+#auto-redirect-banner:not([hidden]) + #backtoarticle {
+  padding-top: 0.5em;
+}
+
+#backtoarticle-link .i {
+  vertical-align: middle;
+  font-size: 1.4em;
+  margin: 0 -0.2em;
+}
+
+.temporary-frame {
+  display: none;
+}
+
+.reader-frame {
+  display: block;
+  width: 100%;
+  /* height is set in js */
+  border: 0;
+}
+
+#site-nav-links {
+  padding: 1em 1.5em;
+}
+
+#site-nav-links .site-icon-link {
+  opacity: 0.9 !important;
+}
+
+#site-nav-links .site-icon {
+  width: 22px;
+  height: 22px;
+  vertical-align: text-bottom;
+}
+
+body[theme="dark"] .site-icon {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+#site-nav-links a {
+  color: inherit;
+  display: inline-block;
+  opacity: 0.55;
+  text-decoration: none;
+  padding: 0 0.5em;
+  font-size: 1.1em;
+  white-space: nowrap;
+  max-width: 15em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#site-nav-links a.selected {
+  opacity: 0.66;
+  font-weight: 600;
+}
+
+body:not([theme="light"]) #site-nav-links a {
+  opacity: 0.65;
+}
+
+body:not([theme="light"]) #site-nav-links a.selected {
+  opacity: 0.75;
+}

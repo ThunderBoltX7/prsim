@@ -1,0 +1,114 @@
+#settings-button {
+  position: fixed;
+  top: 0.75em;
+  right: 0.75em;
+  opacity: 0.7;
+  font-size: 1.25em;
+  padding: 0.5em;
+  height: 2.25em;
+  width: 2.25em;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+#settings-button:hover {
+  opacity: 1;
+  background: var(--hover, rgba(0, 0, 0, 0.05));
+}
+
+#settings-button .i {
+  pointer-events: none;
+}
+
+#settings-dropdown {
+  position: fixed;
+  top: 3.25em;
+  right: 1em;
+  background: var(--panel-solid, #ffffff);
+  color: var(--text, #1b1e29);
+  border: 1px solid var(--line, rgba(0, 0, 0, 0.1));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 0.85em 0.6em;
+  min-width: 220px;
+  border-radius: 12px;
+  z-index: 100;
+}
+
+body[theme="dark"] #settings-dropdown,
+body.dark-mode #settings-dropdown {
+  background: #141414;
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+body[theme="sepia"] #settings-dropdown {
+  background: #fbf0d9;
+  color: #38281c;
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+#settings-dropdown .setting-section {
+  display: flex;
+  align-items: center;
+  padding: 0.4em 0.75em;
+  font-size: 13px;
+}
+
+#settings-dropdown .setting-section.theme-circles {
+  justify-content: space-evenly;
+  padding: 0.4em 0;
+}
+
+.setting-section input {
+  margin-right: 0.4em;
+}
+
+#settings-dropdown .setting-section[hidden] {
+  display: none;
+}
+
+.setting-section + .setting-section {
+  border-top: 1px solid var(--line, rgba(0, 0, 0, 0.06));
+  padding-top: 0.5em;
+  margin-top: 0.25em;
+}
+
+#settings-dropdown label {
+  padding-left: 0.25em;
+  cursor: pointer;
+}
+
+#settings-dropdown .theme-circle {
+  display: inline-block;
+  width: 1.75em;
+  height: 1.75em;
+  border-radius: 50%;
+  margin: 0.2em;
+  border: 2px solid transparent;
+  box-shadow: 0 0 0 1px var(--line-strong, rgba(0, 0, 0, 0.2));
+  transition: box-shadow 0.15s, transform 0.1s;
+  cursor: pointer;
+}
+
+#settings-dropdown .theme-circle:hover {
+  transform: scale(1.08);
+}
+
+#settings-dropdown .theme-circle[data-theme="light"] {
+  background: #ffffff;
+}
+
+#settings-dropdown .theme-circle[data-theme="sepia"] {
+  background: #fbf0d9;
+}
+
+#settings-dropdown .theme-circle[data-theme="dark"] {
+  background: #141414;
+}
+
+#settings-dropdown .theme-circle.selected {
+  box-shadow: 0 0 0 2px var(--accent, #9fa8ff);
+}

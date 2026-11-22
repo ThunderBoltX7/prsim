@@ -1,0 +1,67 @@
+#ntp-content {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    opacity: 1;
+    transition: 0.15s opacity;
+    overflow: hidden;
+}
+
+body:not(.is-ntp) #ntp-content {
+    opacity: 0;
+}
+
+#ntp-background {
+    width: 100%;
+    height: 100%;
+    margin: auto;
+    object-fit: cover;
+}
+
+#ntp-background-controls {
+    position: absolute;
+    bottom: 1.25em;
+    right: 1.25em;
+    display: flex;
+    gap: 0.5em;
+}
+
+#ntp-background-controls button {
+    background: var(--bg-card, #ffffff);
+    border: 1px solid var(--border, rgba(0, 0, 0, 0.15));
+    color: var(--text-primary, #1b1e29);
+    font-size: 1.1em;
+    width: 2.2em;
+    height: 2.2em;
+    line-height: 2.2em;
+    border-radius: 50%;
+    opacity: 0.75;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    transition: 0.15s all;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+[data-theme="dark"] #ntp-background-controls button,
+.dark-mode #ntp-background-controls button {
+    background: var(--bg-elevated, #141414);
+    border-color: var(--border, rgba(255, 255, 255, 0.15));
+    color: var(--text-primary, #ffffff);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+#ntp-background-controls:hover button {
+    opacity: 1;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+#ntp-background-controls:hover #ntp-image-remove {
+    color: #ff453a !important;
+}
+
+#ntp-background-controls:not(:hover) #ntp-image-remove {
+    opacity: 0;
+}

@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drift: AI-native browser UI</title>
+<style>
+/* =========================================================
+   1. DESIGN TOKENS (move these to css/tokens.css in Min)
+   ========================================================= */
+:root {
+  --bg: #0c0f14;
+  --panel: rgba(26, 30, 41, .62);          /* glass surface */
+  --panel-solid: #181c27;
+  --hover: rgba(255, 255, 255, .06);
+  --line: rgba(255, 255, 255, .08);        /* crisp 1px borders */
+  --line-strong: rgba(255, 255, 255, .16);
+  --text: #e8eaf0;
+  --muted: #8b93a6;
+  --accent: #9fa8ff;                       /* the one accent: AI + focus + active */
+  --accent-soft: rgba(159, 168, 255, .14);
+  --accent-ink: #12142e;
+  --accent-text: var(--accent);            /* accent used for text/borders (darkened in light theme) */
+  --fill-1: rgba(255, 255, 255, .05); --fill-2: rgba(255, 255, 255, .08); --fill-3: rgba(255, 255, 255, .14);
+  --inset: rgba(0, 0, 0, .22);             /* recessed fields: omnibox, composer, selects */
+  --scrim: rgba(5, 7, 10, .55); --dialog: rgba(24, 28, 39, .9);
+  --glow-a: rgba(120, 110, 255, .24); --glow-b: rgba(60, 160, 200, .18);
+  --shadow: none;
+  color-scheme: dark;
+  --danger: #ff8a8a;
+  --r-lg: 14px; --r-md: 10px; --r-sm: 7px;
+  --ease: cubic-bezier(.3, .7, .2, 1);
+  --sidebar-w: 248px; --sidebar-w-collapsed: 60px; --copilot-w: 360px; --blur: 22px;
+  --font: "Segoe UI Variable Text", "Inter", system-ui, -apple-system, sans-serif;
+}
+/* LIGHT THEME: only tokens change; component rules stay the same */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #eceef4; --panel: rgba(255, 255, 255, .7); --panel-solid: #ffffff;
+  --hover: rgba(20, 24, 40, .06); --line: rgba(20, 24, 40, .1); --line-strong: rgba(20, 24, 40, .2);
+  --text: #1b1e29; --muted: #667085;
+  --fill-1: rgba(20, 24, 40, .04); --fill-2: rgba(20, 24, 40, .07); --fill-3: rgba(20, 24, 40, .14);
+  --inset: rgba(20, 24, 40, .05);
+  --scrim: rgba(30, 34, 50, .35); --dialog: rgba(255, 255, 255, .94);
+  --glow-a: rgba(120, 110, 255, .18); --glow-b: rgba(60, 160, 200, .16);
+  --shadow: 0 1px 2px rgba(20, 24, 40, .06), 0 6px 20px rgba(20, 24, 40, .05);
+  --accent-text: color-mix(in srgb, var(--accent) 55%, #1b1e29);
+  --danger: #c2362f;
+}
+* { box-sizing: border-box; margin: 0; }
+html, body { height: 100%; }
+body {
+  font: 13px/1.45 var(--font); color: var(--text); overflow: hidden;
+  background:
+    radial-gradient(900px 520px at 12% -10%, var(--glow-a), transparent 60%),
+    radial-gradient(760px 520px at 100% 105%, var(--glow-b), transparent 60%),
+    var(--bg);
+}
+button, input, textarea { font: inherit; color: inherit; }
+button { background: none; border: 0; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.i { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8;
+     stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+/* Shared glass surface */
+.glass {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-lg);
+  -webkit-backdrop-filter: blur(var(--blur)) saturate(140%); backdrop-filter: blur(var(--blur)) saturate(140%);
+  box-shadow: var(--shadow);
+}
+.icon-btn {
+  display: grid; place-items: center; width: 30px; height: 30px; border-radius: var(--r-sm);
+  color: var(--muted); transition: background .15s, color .15s;
+}
+.icon-btn:hover:not(:disabled) { background: var(--hover); color: var(--text); }
+.icon-btn:disabled { opacity: .35; cursor: default; }
+.icon-btn[aria-pressed="true"] { color: var(--accent-text); background: var(--accent-soft); }
+
+/* =========================================================
+   2. APP SHELL: [tabs sidebar] [toolbar + (viewport | copilot)]
+   ========================================================= */
+.app { display: flex; height: 100vh; padding: 8px; gap: 8px; }
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.body { flex: 1; min-height: 0; display: flex; gap: 8px; }
+
+/* =========================================================
+   3. VERTICAL TAB SIDEBAR (collapsible to icons)
+   ========================================================= */
+.tabs {
+  width: var(--sidebar-w); flex: none; display: flex; flex-direction: column; padding: 8px;
+  transition: width .26s var(--ease); overflow: hidden;
+}
+.app.tabs-collapsed .tabs { width: var(--sidebar-w-collapsed); }
+.tabs-head { display: flex; align-items: center; justify-content: space-between; height: 34px; margin-bottom: 6px; }
+.brand { font-weight: 650; letter-spacing: .01em; padding-left: 8px; white-space: nowrap; }
+.app.tabs-collapsed .brand { display: none; }
+.app.tabs-collapsed .tabs-head { justify-content: center; }
+.tab-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; margin: 0 -2px; padding: 0 2px; }
+.tab {
+  position: relative; display: flex; align-items: center; gap: 9px; height: 36px; padding: 0 6px 0 9px;
+  border: 1px solid transparent; border-radius: var(--r-md); color: var(--muted); cursor: default;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.tab:hover { background: var(--hover); color: var(--text); }
+.tab.active { background: var(--fill-2); border-color: var(--line-strong); color: var(--text); }
+.tab-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tab-x { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; opacity: 0; color: var(--muted); transition: opacity .15s, background .15s; }
+.tab:hover .tab-x, .tab.active .tab-x, .tab-x:focus-visible { opacity: 1; }
+.tab-x:hover { background: var(--fill-3); color: var(--text); }
+.app.tabs-collapsed .tab { justify-content: center; padding: 0; }
+.app.tabs-collapsed .tab-title, .app.tabs-collapsed .tab-x { display: none; }
+.fav { width: 18px; height: 18px; flex: none; border-radius: 6px; display: grid; place-items: center;
+       font-size: 10px; font-weight: 700; color: #11131c; }
+.fav .i { width: 12px; height: 12px; stroke-width: 2.2; }
+.spin { width: 14px; height: 14px; flex: none; margin: 2px; border-radius: 50%;
+        border: 2px solid var(--line-strong); border-top-color: var(--accent-text); animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.new-tab {
+  display: flex; align-items: center; gap: 9px; height: 36px; padding: 0 9px; margin-top: 6px; flex: none;
+  border: 1px dashed var(--line-strong); border-radius: var(--r-md); color: var(--muted); white-space: nowrap;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.new-tab:hover { background: var(--hover); color: var(--text); border-style: solid; }
+.app.tabs-collapsed .new-tab { justify-content: center; padding: 0; }
+.app.tabs-collapsed .new-tab span { display: none; }
+
+/* =========================================================
+   4. TOOLBAR + SMART OMNIBOX
+   ========================================================= */
+.toolbar { display: flex; align-items: center; gap: 4px; height: 50px; padding: 0 8px; flex: none; }
+.omni {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 4px; height: 34px; margin: 0 6px; padding: 0 4px;
+  background: var(--inset); border: 1px solid var(--line); border-radius: var(--r-md);
+  transition: border-color .18s, box-shadow .18s;
+}
+.omni:focus-within { border-color: var(--line-strong); }
+.omni[data-mode="ai"] { border-color: var(--accent-text); box-shadow: 0 0 0 3px var(--accent-soft); }
+.mode { display: flex; padding: 2px; border-radius: 8px; background: var(--fill-1); flex: none; }
+.mode button { padding: 3px 10px; border-radius: 6px; color: var(--muted); font-size: 12px; transition: background .18s, color .18s; }
+.mode button[aria-pressed="true"] { background: var(--panel-solid); color: var(--text); box-shadow: 0 0 0 1px var(--line-strong); }
+.omni[data-mode="ai"] .mode button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); box-shadow: none; }
+#omnibox { flex: 1; min-width: 0; height: 100%; padding: 0 8px; background: none; border: 0; outline: 0; }
+#omnibox::placeholder { color: var(--muted); }
+
+/* =========================================================
+   5. WORKSPACE: viewport (mock webview) + AI co-pilot
+   ========================================================= */
+.viewport {
+  position: relative; flex: 1; min-width: 0; overflow: hidden; border-radius: var(--r-lg);
+  border: 1px solid var(--line); background: #f6f5f2; color: #1d1f24;
+}
+.bar { position: absolute; top: 0; left: 0; height: 2px; width: 0; background: var(--accent); z-index: 2; }
+.bar.run { animation: load .42s var(--ease) forwards; }
+@keyframes load { 0% { width: 0; opacity: 1; } 80% { width: 100%; opacity: 1; } 100% { width: 100%; opacity: 0; } }
+.page { height: 100%; overflow: auto; padding: 44px 32px 64px; }
+.doc { max-width: 640px; margin: 0 auto; font: 17px/1.65 Georgia, "Times New Roman", serif; }
+.doc .site { font: 12px var(--font); color: #6b7080; margin-bottom: 10px; }
+.doc h1 { font-size: 34px; line-height: 1.15; margin-bottom: 18px; letter-spacing: -.01em; }
+.doc p { margin-bottom: 16px; }
+.doc a { color: #3b46c4; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.doc ul { list-style: none; padding: 0; }
+.doc li { margin-bottom: 18px; }
+.doc li small { display: block; font: 13px var(--font); color: #6b7080; }
+.start { text-align: center; padding-top: 9vh; font-family: var(--font); }
+.start h1 { font: 600 30px/1.2 var(--font); margin-bottom: 8px; }
+.start p { color: #6b7080; margin-bottom: 26px; }
+.start .quick { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.start .quick a { text-decoration: none; padding: 10px 16px; border: 1px solid #d9d7d0; border-radius: 10px; background: #fff; color: #1d1f24; font: 14px var(--font); }
+.start .quick a:hover { border-color: #3b46c4; }
+/* New-tab search bar */
+.start-search { display: flex; align-items: center; gap: 8px; max-width: 540px; margin: 0 auto 24px; padding: 6px 6px 6px 18px; border: 1px solid #d9d7d0; border-radius: 99px; background: #fff; transition: border-color .15s, box-shadow .15s; }
+.start-search:focus-within { border-color: #3b46c4; box-shadow: 0 0 0 3px rgba(59, 70, 196, .15); }
+.start-search input { flex: 1; min-width: 0; padding: 8px 0; border: 0; outline: 0; background: none; font: 15px var(--font); color: #1d1f24; }
+.start-search button { padding: 8px 16px; border-radius: 99px; font: 14px var(--font); }
+.start-search .solid { background: #1d1f24; color: #fff; }
+.start-search .ghost { border: 1px solid #d9d7d0; color: #3b46c4; }
+.start-search .ghost:hover { border-color: #3b46c4; }
+.readout { position: absolute; right: 10px; bottom: 10px; padding: 3px 8px; border-radius: 6px; font: 11px var(--font);
+           background: rgba(12, 15, 20, .72); color: #c6cad6; pointer-events: none; font-variant-numeric: tabular-nums; }
+
+/* Co-pilot: outer box animates width (so the viewport reflows smoothly);
+   inner box keeps a fixed width so chat content never re-wraps mid-animation. */
+.copilot { width: var(--copilot-w); flex: none; overflow: hidden; transition: width .28s var(--ease), margin .28s var(--ease), opacity .2s, border-width .28s; }
+.copilot.closed { width: 0; margin-left: -8px; opacity: 0; border-width: 0; pointer-events: none; }
+.copilot-inner { width: var(--copilot-w); height: 100%; display: flex; flex-direction: column; }
+.cp-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 10px 10px 14px; border-bottom: 1px solid var(--line); }
+.cp-head strong { font-weight: 650; }
+.ctx { display: flex; align-items: center; gap: 10px; margin: 12px 12px 0; padding: 10px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--inset); }
+.ctx .fav { width: 26px; height: 26px; border-radius: 8px; font-size: 12px; }
+.ctx-text { flex: 1; min-width: 0; }
+.ctx-title, .ctx-sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ctx-sub { color: var(--muted); font-size: 12px; }
+.pill { flex: none; padding: 2px 8px; border-radius: 99px; font-size: 11px; color: var(--accent-text); background: var(--accent-soft); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 12px 4px; }
+.chip { padding: 5px 11px; border: 1px solid var(--line-strong); border-radius: 99px; color: var(--text); transition: background .15s, border-color .15s, transform .1s; }
+.chip:hover { background: var(--accent-soft); border-color: var(--accent-text); }
+.chip:active { transform: scale(.97); }
+.feed { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
+.empty { margin: auto; text-align: center; color: var(--muted); max-width: 230px; }
+.msg { max-width: 92%; padding: 9px 12px; border-radius: 12px; animation: pop .18s var(--ease); word-wrap: break-word; }
+@keyframes pop { from { opacity: 0; transform: translateY(4px); } }
+.msg.user { align-self: flex-end; background: var(--accent); color: var(--accent-ink); border-bottom-right-radius: 4px; }
+.msg.ai { align-self: flex-start; background: var(--fill-1); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+.dots { display: inline-flex; gap: 4px; padding: 5px 0; }
+.dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); animation: blink 1s infinite; }
+.dots i:nth-child(2) { animation-delay: .15s; } .dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+.composer { display: flex; align-items: flex-end; gap: 8px; margin: 0 12px 12px; padding: 6px 6px 6px 12px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--inset); transition: border-color .15s; }
+.composer:focus-within { border-color: var(--accent-text); }
+.composer textarea { flex: 1; resize: none; max-height: 110px; padding: 6px 0; background: none; border: 0; outline: 0; }
+.send { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: var(--accent); color: var(--accent-ink); transition: opacity .15s; }
+.send:disabled { opacity: .35; cursor: default; }
+.foot { padding: 0 14px 10px; font-size: 11px; color: var(--muted); }
+
+/* =========================================================
+   6. SETTINGS DIALOG
+   ========================================================= */
+.new-tab.flat { border-color: transparent; margin-top: 2px; }
+.scrim { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding: 24px; background: var(--scrim);
+         opacity: 0; visibility: hidden; transition: opacity .2s, visibility .2s; }
+.scrim.open { opacity: 1; visibility: visible; }
+.settings { position: relative; width: min(720px, 100%); height: min(520px, 100%); display: flex; overflow: hidden;
+            background: var(--dialog); transform: translateY(8px) scale(.98); transition: transform .24s var(--ease); }
+.scrim.open .settings { transform: none; }
+.st-nav { width: 168px; flex: none; padding: 14px 10px; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 2px; }
+.st-nav h2 { font-size: 15px; font-weight: 650; padding: 4px 10px 12px; }
+.st-nav button { text-align: left; padding: 7px 10px; border-radius: var(--r-sm); color: var(--muted); transition: background .15s, color .15s; }
+.st-nav button:hover { background: var(--hover); color: var(--text); }
+.st-nav button[aria-current="true"] { background: var(--fill-2); color: var(--text); }
+.st-main { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.st-close { position: absolute; top: 10px; right: 10px; }
+.st-body { flex: 1; overflow-y: auto; padding: 18px 20px 16px; }
+.st-body h3 { font-size: 16px; font-weight: 650; margin-bottom: 6px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 13px 0; border-bottom: 1px solid var(--line); }
+.row:last-child { border-bottom: 0; }
+.row small { display: block; color: var(--muted); font-size: 12px; }
+.sw { position: relative; width: 36px; height: 20px; flex: none; border-radius: 99px; background: var(--fill-3); transition: background .18s; }
+.sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .18s var(--ease), background .18s; }
+.sw[aria-checked="true"] { background: var(--accent); }
+.sw[aria-checked="true"]::after { transform: translateX(16px); background: var(--accent-ink); }
+.sel { padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-sm); background: var(--inset); }
+.sel option { background: var(--panel-solid); }
+.swatches { display: flex; gap: 8px; }
+.swatch { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--panel-solid); box-shadow: 0 0 0 1px var(--line-strong); transition: box-shadow .15s; }
+.swatch[aria-checked="true"] { box-shadow: 0 0 0 2px var(--text); }
+input[type="range"] { width: 140px; accent-color: var(--accent); }
+.keys { width: 100%; border-collapse: collapse; }
+.keys td { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.keys td:last-child { text-align: right; }
+kbd { font: 12px var(--font); padding: 2px 7px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--fill-1); }
+body.calm * { transition: none !important; animation: none !important; }
+
+/* =========================================================
+   7. DOWNLOADS: toolbar popover + full page (about:downloads)
+   ========================================================= */
+.icon-btn { position: relative; }
+.icon-btn .dot { display: none; position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--panel-solid); }
+.icon-btn[data-busy="true"] .dot { display: block; }
+.page.internal { background: var(--panel-solid); color: var(--text); }
+.dl-wrap { max-width: 760px; margin: 0 auto; font-family: var(--font); }
+.dl-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.dl-head h1 { flex: 1; font: 600 24px var(--font); }
+.dl-search { flex: 0 1 220px; min-width: 0; height: 32px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: 99px; background: var(--inset); outline: 0; color: var(--text); }
+.dl-search:focus { border-color: var(--accent-text); }
+.dl-group h2 { margin: 22px 0 8px; font: 600 12px var(--font); color: var(--muted); }
+.dl-item { display: flex; align-items: center; gap: 12px; padding: 12px; margin-bottom: 8px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--fill-1); }
+.dl-ext { display: grid; place-items: center; width: 38px; height: 38px; flex: none; border-radius: 10px; background: var(--accent-soft); color: var(--accent-text); font: 600 11px var(--font); }
+.dl-main { flex: 1; min-width: 0; }
+.dl-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.dl-meta { color: var(--muted); font-size: 12px; }
+.dl-item[data-state="failed"] .dl-meta { color: var(--danger); }
+.dl-bar { height: 4px; margin-top: 8px; border-radius: 99px; background: var(--fill-3); overflow: hidden; }
+.dl-bar i { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width .35s linear; }
+.dl-actions { display: flex; flex: none; gap: 2px; }
+.dl-btn { padding: 4px 9px; border-radius: 7px; font-size: 12px; color: var(--accent-text); transition: background .15s; }
+.dl-btn:hover { background: var(--hover); }
+.dl-btn[data-dl-act="remove"], .dl-btn[data-dl-act="cancel"] { color: var(--muted); }
+.dl-empty { padding: 36px 12px; text-align: center; color: var(--muted); }
+.dl-pop { position: fixed; top: 66px; right: 16px; z-index: 8; width: 380px; max-height: min(440px, calc(100vh - 90px)); display: flex; flex-direction: column;
+          background: var(--dialog); opacity: 0; visibility: hidden; transform: translateY(-6px); transition: opacity .18s, transform .22s var(--ease), visibility .18s; }
+.dl-pop.open { opacity: 1; visibility: visible; transform: none; }
+.dl-pop-head, .dl-pop-foot { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; }
+.dl-pop-head { border-bottom: 1px solid var(--line); }
+.dl-pop-foot { border-top: 1px solid var(--line); }
+.dl-pop-list { flex: 1; overflow-y: auto; padding: 8px 8px 0; }
+.toast { position: fixed; left: 50%; bottom: 22px; z-index: 20; padding: 9px 14px; border-radius: var(--r-md); border: 1px solid var(--line-strong);
+         background: var(--panel-solid); color: var(--text); box-shadow: 0 8px 24px rgba(0, 0, 0, .18); opacity: 0; transform: translate(-50%, 8px); pointer-events: none; transition: opacity .2s, transform .24s var(--ease); }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 900px) { .app:not(.tabs-collapsed) .tabs { width: var(--sidebar-w-collapsed); } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+
+<!-- SVG icon sprite: reuse with <svg class="i"><use href="#i-name"/></svg> -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-fwd" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+  <symbol id="i-reload" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 4v5h-5"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-sidebar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></symbol>
+  <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M15 4v16"/></symbol>
+  <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6L7 7M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M19 7h1M4 17h3M13 17h7"/><circle cx="16" cy="7" r="2.5"/><circle cx="10" cy="17" r="2.5"/></symbol>\n  <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+</svg>
+
+<div class="app" id="app">
+
+  <!-- ===== Vertical tab sidebar ===== -->
+  <aside class="tabs glass" aria-label="Tabs">
+    <div class="tabs-head">
+      <span class="brand">Prism</span>
+      <button class="icon-btn" id="toggleTabs" title="Collapse tabs (Alt+B)" aria-label="Collapse tab sidebar"><svg class="i"><use href="#i-sidebar"/></svg></button>
+    </div>
+    <div class="tab-list" id="tabList" role="tablist"></div>
+    <button class="new-tab" id="newTab" title="New tab (Alt+T)"><svg class="i"><use href="#i-plus"/></svg><span>New tab</span></button>
+    <button class="new-tab flat" id="openDownloads" title="All downloads"><svg class="i"><use href="#i-download"/></svg><span>Downloads</span></button>
+    <button class="new-tab flat" id="openSettings" title="Settings (Alt+,)"><svg class="i"><use href="#i-sliders"/></svg><span>Settings</span></button>
+  </aside>
+
+  <div class="main">
+    <!-- ===== Toolbar: nav buttons + smart omnibox + co-pilot toggle ===== -->
+    <header class="toolbar glass">
+      <button class="icon-btn" id="back" title="Back" aria-label="Back"><svg class="i"><use href="#i-back"/></svg></button>
+      <button class="icon-btn" id="fwd" title="Forward" aria-label="Forward"><svg class="i"><use href="#i-fwd"/></svg></button>
+      <button class="icon-btn" id="reload" title="Reload" aria-label="Reload"><svg class="i"><use href="#i-reload"/></svg></button>
+
+      <div class="omni" id="omni" data-mode="web">
+        <div class="mode" role="group" aria-label="Omnibox mode">
+          <button id="modeWeb" aria-pressed="true">Web</button>
+          <button id="modeAi" aria-pressed="false">Ask AI</button>
+        </div>
+        <input id="omnibox" type="text" spellcheck="false" autocomplete="off" aria-label="Address or AI prompt">
+      </div>
+
+      <button class="icon-btn" id="toggleDl" title="Downloads (Alt+D)" aria-label="Downloads" aria-pressed="false" data-busy="false"><svg class="i"><use href="#i-download"/></svg><span class="dot"></span></button>
+      <button class="icon-btn" id="toggleTheme" title="Switch theme" aria-label="Switch theme"><svg class="i"><use href="#i-sun"/></svg></button>
+      <button class="icon-btn" id="toggleAi" title="AI co-pilot (Alt+J)" aria-label="Toggle AI co-pilot" aria-pressed="true"><svg class="i"><use href="#i-panel"/></svg></button>
+    </header>
+
+    <div class="body">
+      <!-- Mock webview. In Min this is the BrowserView / WebContentsView area. -->
+      <section class="viewport" id="viewport">
+        <div class="bar" id="bar"></div>
+        <div class="page" id="page"></div>
+        <div class="readout" id="readout"></div>
+      </section>
+
+      <!-- ===== AI co-pilot ===== -->
+      <aside class="copilot glass" id="copilot" aria-label="AI co-pilot">
+        <div class="copilot-inner">
+          <div class="cp-head">
+            <div><strong>Co-pilot</strong><div class="ctx-sub" id="modelName"></div></div>
+            <button class="icon-btn" id="closeAi" aria-label="Close co-pilot"><svg class="i"><use href="#i-x"/></svg></button>
+          </div>
+          <div class="ctx" id="ctx"></div>
+          <div class="chips">
+            <button class="chip" data-q="Summarize this page">Summarize Page</button>
+            <button class="chip" data-q="What are the key takeaways?">Key Takeaways</button>
+            <button class="chip" data-q="Explain this simply">Explain Simply</button>
+          </div>
+          <div class="feed" id="feed" aria-live="polite"></div>
+          <div class="composer">
+            <textarea id="input" rows="1" placeholder="Ask about this page" aria-label="Message the co-pilot"></textarea>
+            <button class="send" id="send" aria-label="Send" disabled><svg class="i"><use href="#i-up"/></svg></button>
+          </div>
+          <div class="foot">Prototype: replies are mocked, not generated.</div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Downloads popover (toolbar) ===== -->
+<section class="dl-pop glass" id="dlPop" aria-label="Recent downloads" inert>
+  <div class="dl-pop-head"><strong>Downloads</strong><button class="dl-btn" data-dl-all>Show all</button></div>
+  <div class="dl-pop-list" id="dlPopList"></div>
+  <div class="dl-pop-foot"><button class="dl-btn" data-dl-clear>Clear completed</button></div>
+</section>
+<div class="toast" id="toast" role="status"></div>
+
+<!-- ===== Settings dialog ===== -->
+<div class="scrim" id="scrim" inert>
+  <section class="settings glass" role="dialog" aria-modal="true" aria-labelledby="stTitle">
+    <nav class="st-nav" id="stNav">
+      <h2 id="stTitle">Settings</h2>
+      <button data-pane="appearance" aria-current="true">Appearance</button>
+      <button data-pane="search" aria-current="false">Search</button>
+      <button data-pane="downloads" aria-current="false">Downloads</button>
+      <button data-pane="ai" aria-current="false">Co-pilot</button>
+      <button data-pane="keys" aria-current="false">Shortcuts</button>
+    </nav>
+    <div class="st-main">
+      <button class="icon-btn st-close" id="closeSettings" aria-label="Close settings"><svg class="i"><use href="#i-x"/></svg></button>
+      <div class="st-body">
+
+        <div class="pane" data-pane="appearance">
+          <h3>Appearance</h3>
+          <div class="row"><div>Theme<small>System follows your OS setting.</small></div>
+            <select class="sel" data-set="theme" aria-label="Theme"><option value="dark">Dark</option><option value="light">Light</option><option value="system">System</option></select></div>
+          <div class="row"><div>Accent color<small>Used for AI mode, focus and active states.</small></div>
+            <div class="swatches" role="radiogroup" aria-label="Accent color">
+              <button class="swatch" role="radio" data-set="accent" data-value="#9fa8ff" style="background:#9fa8ff" aria-label="Periwinkle"></button>
+              <button class="swatch" role="radio" data-set="accent" data-value="#7fd1c4" style="background:#7fd1c4" aria-label="Mint"></button>
+              <button class="swatch" role="radio" data-set="accent" data-value="#f0b37e" style="background:#f0b37e" aria-label="Amber"></button>
+              <button class="swatch" role="radio" data-set="accent" data-value="#f19cc0" style="background:#f19cc0" aria-label="Rose"></button>
+              <button class="swatch" role="radio" data-set="accent" data-value="#8cc7ff" style="background:#8cc7ff" aria-label="Sky"></button>
+            </div></div>
+          <div class="row"><div>Glass blur<small>Set to 0 for solid panels.</small></div><input type="range" min="0" max="40" data-set="blur" aria-label="Glass blur"></div>
+          <div class="row"><div>Start with tabs collapsed<small>Applies next launch.</small></div><button class="sw" role="switch" data-set="collapsed" aria-label="Start with tabs collapsed"></button></div>
+          <div class="row"><div>Show page-area size<small>Live size of the web area.</small></div><button class="sw" role="switch" data-set="readout" aria-label="Show page-area size"></button></div>
+          <div class="row"><div>Reduce motion<small>Turns off transitions and animations.</small></div><button class="sw" role="switch" data-set="calm" aria-label="Reduce motion"></button></div>
+        </div>
+
+        <div class="pane" data-pane="search" hidden>
+          <h3>Search</h3>
+          <div class="row"><div>Default search engine<small>Used by the omnibox and the new-tab search bar.</small></div>
+            <select class="sel" data-set="engine" aria-label="Default search engine"><option>Drift Search</option><option>DuckDuckGo</option><option>Brave Search</option><option>Startpage</option></select></div>
+          <div class="row"><div>Search bar on new tab<small>Show a search box on the start page.</small></div><button class="sw" role="switch" data-set="startSearch" aria-label="Search bar on new tab"></button></div>
+        </div>
+
+        <div class="pane" data-pane="downloads" hidden>
+          <h3>Downloads</h3>
+          <div class="row"><div>Save files to<small>Applies to new downloads.</small></div>
+            <select class="sel" data-set="saveTo" aria-label="Save files to"><option>Downloads</option><option>Desktop</option><option>Documents</option></select></div>
+          <div class="row"><div>Show panel when a download starts<small>Opens the toolbar downloads list.</small></div><button class="sw" role="switch" data-set="dlPopup" aria-label="Show panel when a download starts"></button></div>
+        </div>
+
+        <div class="pane" data-pane="ai" hidden>
+          <h3>Co-pilot</h3>
+          <div class="row"><div>Open on launch<small>Show the co-pilot panel when the browser starts.</small></div><button class="sw" role="switch" data-set="openAi" aria-label="Open co-pilot on launch"></button></div>
+          <div class="row"><div>Use page as context<small>Lets the co-pilot read the active tab.</small></div><button class="sw" role="switch" data-set="context" aria-label="Use page as context"></button></div>
+          <div class="row"><div>Answer length<small>Concise answers use the opening of each section.</small></div>
+            <select class="sel" data-set="length" aria-label="Answer length"><option value="concise">Concise</option><option value="detailed">Detailed</option></select></div>
+          <div class="row"><div>Model<small>Shown in the co-pilot header.</small></div>
+            <select class="sel" data-set="model" aria-label="Model"><option>On-device model</option><option>Cloud model</option></select></div>
+        </div>
+
+        <div class="pane" data-pane="keys" hidden>
+          <h3>Shortcuts</h3>
+          <table class="keys">
+            <tr><td>New tab</td><td><kbd>Alt</kbd> <kbd>T</kbd></td></tr>
+            <tr><td>Close tab</td><td><kbd>Alt</kbd> <kbd>W</kbd></td></tr>
+            <tr><td>Focus omnibox</td><td><kbd>Alt</kbd> <kbd>L</kbd></td></tr>
+            <tr><td>Toggle co-pilot</td><td><kbd>Alt</kbd> <kbd>J</kbd></td></tr>
+            <tr><td>Toggle tab sidebar</td><td><kbd>Alt</kbd> <kbd>B</kbd></td></tr>
+            <tr><td>Show downloads</td><td><kbd>Alt</kbd> <kbd>D</kbd></td></tr>
+            <tr><td>Open settings</td><td><kbd>Alt</kbd> <kbd>,</kbd></td></tr>
+            <tr><td>Ask AI from the omnibox</td><td><kbd>?</kbd> then space</td></tr>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+/* =========================================================
+   MOCK CONTENT: stands in for the web and for the model
+   ========================================================= */
+const SITES = {
+  "tidepools.example/guide": { title: "A field guide to tide pools", file: { name: "tide-pool-field-guide.pdf", size: 2.4e6 }, p: [
+    "Tide pools form where rock basins hold seawater after the tide drops. Each pool is a small world with its own temperature, salt level and cast of animals.",
+    "Life here has to survive heat, wave impact and drying out every day. Anemones close up, mussels clamp shut, and hermit crabs retreat into borrowed shells.",
+    "The best time to visit is an hour before low tide on a calm morning. Move slowly, wet your hands before touching anything, and put every rock back where you found it." ] },
+  "newsroom.example/night-buses": { title: "City approves new night bus network", file: { name: "night-bus-routes.csv", size: 48e3 }, p: [
+    "The council voted 7 to 2 on Thursday to fund a night bus network covering 14 routes. Service will run until 3 a.m. on weekends starting in March.",
+    "Supporters say late-shift workers have gone without reliable transport for years. Opponents worry about the $4.2 million annual cost and low ridership in early pilots.",
+    "A review is scheduled after six months of service. Fares will match daytime prices, and transfers will stay free for 90 minutes." ] },
+  "docs.example/webcontentsview": { title: "Migrating to WebContentsView", file: { name: "webcontentsview-migration.zip", size: 12.8e6 }, p: [
+    "Electron replaced BrowserView with WebContentsView, which you position yourself with setBounds. Existing apps need to create views differently and attach them to the window’s contentView.",
+    "Layout is no longer automatic, so apps must recompute bounds whenever the window or a surrounding panel resizes. Listening for resize events and panel toggles keeps the page area correct.",
+    "Session and preload options still live in webPreferences. Test navigation, devtools and focus handling after the switch." ] }
+};
+const SITE_KEYS = Object.keys(SITES);
+const NEWTAB = "about:newtab", DLURL = "about:downloads";
+
+const hostOf = u => u.startsWith("about:") ? "" : u.replace(/^https?:\/\//, "").split("/")[0];
+const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const firstSentence = s => s.split(/(?<=[.!?])\s/)[0];
+const secondSentence = s => s.split(/(?<=[.!?])\s/)[1] || firstSentence(s);
+
+/* Build a mock page object {title, p[], html} for any URL */
+function pageFor(url) {
+  if (url === DLURL) return { title: "Downloads", p: [], internal: true, html:
+    `<div class="dl-wrap"><div class="dl-head"><h1>Downloads</h1>
+     <input id="dlSearch" class="dl-search" type="search" placeholder="Search downloads" aria-label="Search downloads" value="${esc(dlFilter)}">
+     <button class="dl-btn" data-dl-clear>Clear completed</button></div><div id="dlList"></div></div>` };
+  if (url === NEWTAB) return { title: "New tab", p: [], html:
+    `<div class="start"><h1>Where to?</h1>` +
+    (settings.startSearch ? `<div class="start-search"><input id="startSearch" type="text" spellcheck="false" autocomplete="off" placeholder="Search with ${esc(settings.engine)} or enter address" aria-label="Search or enter address"><button class="ghost" data-act="ask">Ask AI</button><button class="solid" data-act="search">Search</button></div>` : "") +
+    `<div class="quick">${SITE_KEYS.map(k => `<a data-nav="${k}">${esc(SITES[k].title)}</a>`).join("")}</div></div>` };
+
+  if (url.startsWith("search.example/?q=")) {
+    const q = decodeURIComponent(url.split("q=")[1]);
+    return { title: `${q} (search)`, p: SITE_KEYS.map(k => SITES[k].p[0]), html:
+      `<article class="doc"><div class="site">${esc(settings.engine)}</div><h1>Results for “${esc(q)}”</h1><ul>` +
+      SITE_KEYS.map(k => `<li><a data-nav="${k}">${esc(SITES[k].title)}</a><small>${k}</small>${esc(firstSentence(SITES[k].p[0]))}</li>`).join("") + `</ul></article>` };
+  }
+  const s = SITES[url] || { title: hostOf(url) || url, p: [
+    "This is a placeholder page rendered by the prototype. In Min Browser this area holds the real web content.",
+    "The co-pilot reads the active tab and answers questions about it, so try a quick action on the right." ] };
+  return { title: s.title, p: s.p, html:
+    `<article class="doc"><div class="site">${esc(hostOf(url))}</div><h1>${esc(s.title)}</h1>${s.p.map(t => `<p>${esc(t)}</p>`).join("")}${s.file ? `<p><a data-dl="${url}">Download ${esc(s.file.name)} (${fmtSize(s.file.size)})</a></p>` : ""}
+     <p>Related: ${SITE_KEYS.filter(k => k !== url).map(k => `<a data-nav="${k}">${esc(SITES[k].title)}</a>`).join(", ")}</p></article>` };
+}
+
+/* Mock "model": picks a canned behaviour from the prompt */
+function compose(tab, q) {
+  if (!settings.context) return "Page context is off, so I can’t read this tab. Turn it on under Settings > Co-pilot, or ask a general question.";
+  const all = tab.page.p, p = settings.length === "concise" ? all.slice(0, 2) : all;
+  if (!p.length) return "There’s no page text to read on this tab. Open a web page and ask again.";
+  if (/summar/i.test(q))  return `**${tab.page.title}**\n${p.map(settings.length === "concise" ? firstSentence : x => x).join(" ")}`;
+  if (/takeaway|key point/i.test(q)) return "Key takeaways:\n" + p.map(x => "• " + secondSentence(x)).join("\n");
+  if (/simpl|eli5|plain/i.test(q)) return `Put simply: ${firstSentence(p[0])}\nWhy it matters: ${secondSentence(p[p.length - 1])}`;
+  const words = q.toLowerCase().match(/\w{4,}/g) || [];
+  const score = t => words.filter(w => t.toLowerCase().includes(w)).length;
+  const best = p.slice().sort((a, b) => score(b) - score(a))[0];
+  return `The closest passage on this page:\n${best}\nWant a shorter version?`;
+}
+
+/* =========================================================
+   STATE + DOM
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const app = $("#app"), tabList = $("#tabList"), page = $("#page"), omnibox = $("#omnibox"), omni = $("#omni");
+const feed = $("#feed"), input = $("#input"), sendBtn = $("#send"), copilot = $("#copilot");
+
+let tabs = [], cur = null, nextId = 1, mode = "web";
+const settings = { theme: "light", accent: "#9fa8ff", blur: 22, collapsed: false, readout: true, calm: false, engine: "Drift Search",
+                   startSearch: true, saveTo: "Downloads", dlPopup: true, openAi: true, context: true, length: "concise", model: "On-device model" };
+try { Object.assign(settings, JSON.parse(localStorage.getItem("drift-settings") || "{}")); } catch (e) {}
+
+function makeTab(url = NEWTAB) {
+  const t = { id: nextId++, hist: [url], i: 0, chat: [], loading: false, page: pageFor(url), title: "", timer: 0 };
+  t.title = t.page.title;
+  return t;
+}
+const urlOf = t => t.hist[t.i];
+
+/* Favicon: colour derived from the host so each site looks distinct */
+function fav(t) {
+  if (urlOf(t) === DLURL) return `<span class="fav" style="background:var(--fill-3);color:var(--text)"><svg class="i"><use href="#i-download"/></svg></span>`;
+  const h = hostOf(urlOf(t));
+  if (!h) return `<span class="fav" style="background:var(--fill-3);color:var(--text)"><svg class="i"><use href="#i-sparkle"/></svg></span>`;
+  const hue = [...h].reduce((a, c) => a + c.charCodeAt(0), 0) * 7 % 360;
+  return `<span class="fav" style="background:hsl(${hue} 60% 70%)">${esc(h[0].toUpperCase())}</span>`;
+}
+
+/* ---------- Rendering ---------- */
+function renderTabs() {
+  tabList.innerHTML = tabs.map(t => `
+    <div class="tab${t === cur ? " active" : ""}" role="tab" tabindex="0" aria-selected="${t === cur}" data-id="${t.id}" title="${esc(t.title)}">
+      ${t.loading ? '<span class="spin"></span>' : fav(t)}
+      <span class="tab-title">${esc(t.title)}</span>
+      <button class="tab-x" data-close="${t.id}" aria-label="Close tab"><svg class="i"><use href="#i-x"/></svg></button>
+    </div>`).join("");
+}
+function renderChrome() {
+  $("#back").disabled = cur.i === 0;
+  $("#fwd").disabled = cur.i >= cur.hist.length - 1;
+  if (document.activeElement !== omnibox && mode === "web") omnibox.value = urlOf(cur) === NEWTAB ? "" : urlOf(cur);
+  omnibox.placeholder = mode === "ai" ? "Ask the AI anything about this tab" : "Search or enter address";
+}
+function renderContext() {
+  const words = cur.page.p.join(" ").split(/\s+/).filter(Boolean).length;
+  $("#ctx").innerHTML = `${fav(cur)}<div class="ctx-text"><div class="ctx-title">${esc(cur.page.title)}</div>
+    <div class="ctx-sub">${esc(hostOf(urlOf(cur)) || (urlOf(cur) === NEWTAB ? "Blank start page" : "Browser page"))}</div></div>
+    <span class="pill">${!settings.context ? "Off" : words ? words + " words" : "No content"}</span>`;
+}
+const fmt = s => esc(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>");
+function renderFeed() {
+  feed.innerHTML = cur.chat.length ? cur.chat.map(m =>
+    `<div class="msg ${m.role}">${m.text ? fmt(m.text) : '<span class="dots"><i></i><i></i><i></i></span>'}</div>`).join("")
+    : `<div class="empty">Ask about this page, or start with a quick action above.</div>`;
+  feed.scrollTop = feed.scrollHeight;
+}
+function renderAll() {
+  renderTabs(); renderChrome(); renderContext(); renderFeed();
+  page.className = "page" + (cur.page.internal ? " internal" : ""); page.innerHTML = cur.page.html; page.scrollTop = 0; renderDownloads();
+}
+
+/* ---------- Tabs ---------- */
+function openTab(url) { cur = makeTab(url); tabs.push(cur); renderAll(); if (url === NEWTAB) ($("#startSearch") || omnibox).focus(); }
+function activate(id) { cur = tabs.find(t => t.id === id) || cur; renderAll(); }
+function closeTab(id) {
+  const k = tabs.findIndex(t => t.id === id); if (k < 0) return;
+  clearTimeout(tabs[k].timer); tabs.splice(k, 1);
+  if (!tabs.length) return openTab();
+  if (cur.id === id) cur = tabs[Math.min(k, tabs.length - 1)];
+  renderAll();
+}
+
+/* ---------- Navigation (mock load with progress bar) ---------- */
+function load(t) {
+  t.loading = true; renderTabs();
+  const bar = $("#bar"); bar.classList.remove("run"); void bar.offsetWidth; bar.classList.add("run");
+  clearTimeout(t.timer);
+  t.timer = setTimeout(() => {
+    t.loading = false; t.page = pageFor(urlOf(t)); t.title = t.page.title;
+    if (t === cur) renderAll(); else renderTabs();
+  }, 420);
+}
+function go(url) { cur.hist = cur.hist.slice(0, cur.i + 1); cur.hist.push(url); cur.i++; load(cur); renderChrome(); }
+function normalize(v) {
+  if (SITES[v] || v === DLURL) return v;
+  if (/^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(v)) return v.replace(/^https?:\/\//, "");
+  return "search.example/?q=" + encodeURIComponent(v);
+}
+$("#back").onclick = () => { if (cur.i > 0) { cur.i--; load(cur); renderChrome(); } };
+$("#fwd").onclick = () => { if (cur.i < cur.hist.length - 1) { cur.i++; load(cur); renderChrome(); } };
+$("#reload").onclick = () => load(cur);
+
+/* ---------- Omnibox: web vs AI mode ---------- */
+function setMode(m) {
+  mode = m; omni.dataset.mode = m;
+  $("#modeWeb").setAttribute("aria-pressed", m === "web");
+  $("#modeAi").setAttribute("aria-pressed", m === "ai");
+  omnibox.value = m === "web" ? (urlOf(cur) === NEWTAB ? "" : urlOf(cur)) : "";
+  renderChrome(); omnibox.focus();
+}
+$("#modeWeb").onclick = () => setMode("web");
+$("#modeAi").onclick = () => setMode("ai");
+omnibox.addEventListener("focus", () => mode === "web" && omnibox.select());
+omnibox.addEventListener("input", () => {
+  // Typing "? " or "/ai " at the start flips into AI mode without touching the mouse.
+  const m = omnibox.value.match(/^(\?|\/ai)\s/i);
+  if (m && mode === "web") { setMode("ai"); omnibox.value = ""; }
+});
+omnibox.addEventListener("keydown", e => {
+  if (e.key === "Escape") { setMode("web"); omnibox.blur(); }
+  if (e.key !== "Enter") return;
+  const v = omnibox.value.trim(); if (!v) return;
+  if (mode === "ai") { setCopilot(true); ask(v); setMode("web"); omnibox.blur(); }
+  else { go(normalize(v)); omnibox.blur(); }
+});
+// Links inside the mock page
+function submitStart(ai) {
+  const el = $("#startSearch"), v = el.value.trim();
+  if (!v) return el.focus();
+  if (ai) { setCopilot(true); ask(v); el.value = ""; } else go(normalize(v));
+}
+page.addEventListener("click", e => {
+  const a = e.target.closest("[data-nav]"); if (a) return go(a.dataset.nav);
+  const b = e.target.closest("[data-act]"); if (b) return submitStart(b.dataset.act === "ask");
+  const f = e.target.closest("[data-dl]"); if (f) startDownload(SITES[f.dataset.dl].file, hostOf(f.dataset.dl));
+});
+page.addEventListener("input", e => { if (e.target.id === "dlSearch") { dlFilter = e.target.value; renderDownloads(); } });
+page.addEventListener("keydown", e => { if (e.target.id === "startSearch" && e.key === "Enter") submitStart(false); });
+
+/* ---------- Co-pilot ---------- */
+function setCopilot(open) {
+  copilot.classList.toggle("closed", !open);
+  copilot.inert = !open;                       // removes hidden controls from tab order
+  $("#toggleAi").setAttribute("aria-pressed", open);
+  if (open && matchMedia("(min-width:1px)").matches) setTimeout(() => input.focus({ preventScroll: true }), 280);
+}
+function ask(q) {
+  const t = cur, user = { role: "user", text: q }, ai = { role: "ai", text: "" };
+  t.chat.push(user, ai); renderFeed();
+  const words = compose(t, q).split(/(\s+)/); let n = 0;      // stream token by token
+  const tick = () => {
+    n += 2; ai.text = words.slice(0, n).join("");
+    if (t === cur) renderFeed();
+    if (n < words.length) setTimeout(tick, 28);
+  };
+  setTimeout(tick, 650);                                       // "thinking" delay
+}
+function send() { const v = input.value.trim(); if (!v) return; input.value = ""; autosize(); ask(v); }
+function autosize() { input.style.height = "auto"; input.style.height = input.scrollHeight + "px"; sendBtn.disabled = !input.value.trim(); }
+input.addEventListener("input", autosize);
+input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
+sendBtn.onclick = send;
+document.querySelectorAll(".chip").forEach(c => c.onclick = () => ask(c.dataset.q));
+$("#toggleAi").onclick = () => setCopilot(copilot.classList.contains("closed"));
+$("#closeAi").onclick = () => setCopilot(false);
+
+/* ---------- Sidebar + tab list events ---------- */
+$("#toggleTabs").onclick = () => app.classList.toggle("tabs-collapsed");
+$("#newTab").onclick = () => openTab();
+tabList.addEventListener("click", e => {
+  const x = e.target.closest("[data-close]"); if (x) return closeTab(+x.dataset.close);
+  const t = e.target.closest(".tab"); if (t) activate(+t.dataset.id);
+});
+tabList.addEventListener("keydown", e => {
+  const t = e.target.closest(".tab"); if (t && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); activate(+t.dataset.id); }
+});
+
+/* ---------- Shortcuts (Alt-based so they work in a browser preview;
+   remap to Ctrl/Cmd via Min's keybindings when porting) ---------- */
+document.addEventListener("keydown", e => {
+  if (!e.altKey) return;
+  const k = { KeyT: () => openTab(), KeyW: () => closeTab(cur.id), KeyJ: () => $("#toggleAi").click(),
+              KeyL: () => omnibox.focus(), KeyB: () => $("#toggleTabs").click(), Comma: () => setSettings(true), KeyD: () => setDlPop(!$("#dlPop").classList.contains("open")) }[e.code];
+  if (k) { e.preventDefault(); k(); }
+});
+
+/* ---------- Live viewport size ----------
+   In Electron, this is the moment you call view.setBounds({x,y,width,height})
+   so the native WebContentsView tracks the DOM placeholder. */
+const readout = $("#readout");
+new ResizeObserver(([entry]) => {
+  const r = entry.contentRect;
+  readout.textContent = `page area ${Math.round(r.width)} × ${Math.round(r.height)}`;
+}).observe($("#viewport"));
+
+/* ---------- Settings (saved to localStorage when available) ---------- */
+const hexA = (h, a) => { const n = parseInt(h.slice(1), 16); return `rgba(${n >> 16},${n >> 8 & 255},${n & 255},${a})`; };
+const saveSettings = () => { try { localStorage.setItem("drift-settings", JSON.stringify(settings)); } catch (e) {} };
+
+function applySettings() {
+  const dark = settings.theme === "system" ? !matchMedia("(prefers-color-scheme: light)").matches : settings.theme === "dark";
+  document.documentElement.dataset.theme = dark ? "dark" : "light";
+  $("#toggleTheme use").setAttribute("href", dark ? "#i-sun" : "#i-moon");   // icon shows what you switch to
+  $("#toggleTheme").title = dark ? "Switch to light theme" : "Switch to dark theme";
+  const root = document.documentElement.style;
+  root.setProperty("--accent", settings.accent);
+  root.setProperty("--accent-soft", hexA(settings.accent, dark ? .14 : .24));
+  root.setProperty("--blur", settings.blur + "px");
+  document.body.classList.toggle("calm", settings.calm);
+  $("#readout").hidden = !settings.readout;
+  $("#modelName").textContent = settings.model;
+  document.querySelectorAll("#scrim [data-set]").forEach(el => {          // sync controls to state
+    const v = settings[el.dataset.set];
+    if (el.classList.contains("sw")) el.setAttribute("aria-checked", v);
+    else if (el.classList.contains("swatch")) el.setAttribute("aria-checked", settings.accent === el.dataset.value);
+    else el.value = v;
+  });
+}
+function changeSetting(key, value) {
+  settings[key] = value; saveSettings(); applySettings();
+  if (key === "engine" || key === "startSearch") {                         // rebuild pages that show these
+    tabs.forEach(t => { const u = urlOf(t); if (u === NEWTAB || u.startsWith("search.example")) t.page = pageFor(u); });
+    renderAll();
+  }
+  if (key === "context" || key === "length") renderContext();
+}
+const stBody = document.querySelector(".st-body");
+stBody.addEventListener("click", e => {
+  const el = e.target.closest("[data-set]"); if (!el) return;
+  if (el.classList.contains("sw")) changeSetting(el.dataset.set, !settings[el.dataset.set]);
+  if (el.classList.contains("swatch")) changeSetting("accent", el.dataset.value);
+});
+stBody.addEventListener("input", e => {
+  const el = e.target.closest("select, input[type=range]");
+  if (el) changeSetting(el.dataset.set, el.type === "range" ? +el.value : el.value);
+});
+$("#stNav").addEventListener("click", e => {
+  const b = e.target.closest("[data-pane]"); if (!b) return;
+  $("#stNav").querySelectorAll("button").forEach(x => x.setAttribute("aria-current", x === b));
+  document.querySelectorAll(".pane").forEach(p => p.hidden = p.dataset.pane !== b.dataset.pane);
+});
+function setSettings(open) {
+  $("#scrim").classList.toggle("open", open);
+  $("#scrim").inert = !open; $("#app").inert = open;                       // keeps focus inside the dialog
+  (open ? $("#closeSettings") : $("#openSettings")).focus();
+}
+$("#openSettings").onclick = () => setSettings(true);
+$("#toggleTheme").onclick = () => changeSetting("theme", document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+matchMedia("(prefers-color-scheme: light)").addEventListener("change", () => { if (settings.theme === "system") applySettings(); });
+$("#closeSettings").onclick = () => setSettings(false);
+$("#scrim").addEventListener("mousedown", e => { if (e.target.id === "scrim") setSettings(false); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#scrim").classList.contains("open")) setSettings(false); });
+
+/* ---------- Downloads ----------
+   Mock data + simulated progress. In Min, feed this list from Electron's
+   session "will-download" event (item.getFilename(), getTotalBytes(), on "updated"/"done"). */
+let dlId = 1, dlFilter = "";
+const NOW = Date.now(), HOUR = 36e5;
+const downloads = [
+  { name: "design-assets.zip", size: 84e6, host: "assets.example", state: "progress", at: NOW - 10 * 60e3, received: 84e6 * .4, speed: 84e6 * .012 },
+  { name: "tide-pool-field-guide.pdf", size: 2.4e6, host: "tidepools.example", state: "done", at: NOW - 2 * HOUR },
+  { name: "night-bus-routes.csv", size: 48e3, host: "newsroom.example", state: "done", at: NOW - 5 * HOUR },
+  { name: "city-map-2026.png", size: 5.1e6, host: "maps.example", state: "done", at: NOW - 27 * HOUR },
+  { name: "webcontentsview-migration.zip", size: 12.8e6, host: "docs.example", state: "failed", at: NOW - 30 * HOUR },
+  { name: "release-notes-v4.pdf", size: 860e3, host: "docs.example", state: "done", at: NOW - 96 * HOUR }
+].map(d => ({ id: dlId++, received: d.size, speed: 0, saveTo: "Downloads", ...d }));
+downloads.find(d => d.state === "failed").received = 12.8e6 * .31;
+
+function fmtSize(b) { return b >= 1e6 ? (b / 1e6).toFixed(1) + " MB" : b >= 1e3 ? Math.round(b / 1e3) + " KB" : b + " B"; }
+const dayStart = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return +d; };
+const dayLabel = t => t >= dayStart() ? "Today" : t >= dayStart() - 864e5 ? "Yesterday" : "Earlier";
+function timeLabel(t) {
+  const time = new Date(t).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  return t >= dayStart() ? time : t >= dayStart() - 864e5 ? "Yesterday, " + time : new Date(t).toLocaleDateString([], { month: "short", day: "numeric" });
+}
+function dlMeta(d) {
+  const part = `${fmtSize(d.received)} of ${fmtSize(d.size)}`;
+  if (d.state === "progress") return `${part}, about ${Math.max(1, Math.ceil((d.size - d.received) / d.speed * .4))} sec left`;
+  if (d.state === "paused") return `Paused, ${part}`;
+  if (d.state === "failed") return "Failed, network error";
+  if (d.state === "canceled") return "Canceled";
+  return `${fmtSize(d.size)} from ${d.host}, ${timeLabel(d.at)}`;
+}
+const DL_ACTIONS = {
+  progress: [["pause", "Pause"], ["cancel", "Cancel"]], paused: [["resume", "Resume"], ["cancel", "Cancel"]],
+  done: [["open", "Open"], ["folder", "Show in folder"], ["remove", "Remove"]],
+  failed: [["retry", "Retry"], ["remove", "Remove"]], canceled: [["retry", "Retry"], ["remove", "Remove"]]
+};
+function dlItem(d, compact) {
+  const pct = Math.round(d.received / d.size * 100), live = d.state === "progress" || d.state === "paused";
+  const acts = DL_ACTIONS[d.state].slice(0, compact ? 1 : 9);
+  return `<div class="dl-item" data-state="${d.state}"><span class="dl-ext">${esc(d.name.split(".").pop())}</span>
+    <div class="dl-main"><div class="dl-name" title="${esc(d.name)}">${esc(d.name)}</div><div class="dl-meta">${esc(dlMeta(d))}</div>
+    ${live ? `<div class="dl-bar" role="progressbar" aria-label="Download progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>` : ""}</div>
+    <div class="dl-actions">${acts.map(([a, l]) => `<button class="dl-btn" data-dl-act="${a}" data-id="${d.id}">${l}</button>`).join("")}</div></div>`;
+}
+function renderDownloads() {
+  const sorted = downloads.slice().sort((a, b) => b.at - a.at);
+  $("#toggleDl").dataset.busy = downloads.some(d => d.state === "progress");
+  $("#dlPopList").innerHTML = sorted.length ? sorted.slice(0, 5).map(d => dlItem(d, true)).join("") : `<div class="dl-empty">No downloads yet.</div>`;
+  const list = $("#dlList"); if (!list) return;                      // full page only exists on the Downloads tab
+  const q = dlFilter.toLowerCase(), items = sorted.filter(d => d.name.toLowerCase().includes(q));
+  if (!items.length) { list.innerHTML = `<div class="dl-empty">${downloads.length ? "No downloads match your search." : "No downloads yet. Files you download appear here."}</div>`; return; }
+  const groups = {}; items.forEach(d => (groups[dayLabel(d.at)] ||= []).push(d));
+  list.innerHTML = Object.entries(groups).map(([g, ds]) => `<section class="dl-group"><h2>${g}</h2>${ds.map(d => dlItem(d)).join("")}</section>`).join("");
+}
+function startDownload(file, host) {
+  downloads.unshift({ id: dlId++, name: file.name, size: file.size, host, state: "progress", received: 0,
+                      speed: file.size * (.035 + Math.random() * .03), at: Date.now(), saveTo: settings.saveTo });
+  renderDownloads();
+  if (settings.dlPopup) setDlPop(true); else toast(`Downloading ${file.name}`);
+}
+let toastTimer = 0;
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2400); }
+function setDlPop(open) { $("#dlPop").classList.toggle("open", open); $("#dlPop").inert = !open; $("#toggleDl").setAttribute("aria-pressed", open); }
+function openDownloadsPage() { const t = tabs.find(x => urlOf(x) === DLURL); if (t) activate(t.id); else openTab(DLURL); }
+
+$("#toggleDl").onclick = () => setDlPop(!$("#dlPop").classList.contains("open"));
+$("#openDownloads").onclick = openDownloadsPage;
+document.addEventListener("mousedown", e => { if (!e.target.closest("#dlPop, #toggleDl")) setDlPop(false); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") setDlPop(false); });
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-dl-act]");
+  if (b) {
+    const d = downloads.find(x => x.id === +b.dataset.id), a = b.dataset.dlAct; if (!d) return;
+    if (a === "pause") d.state = "paused";
+    if (a === "resume") d.state = "progress";
+    if (a === "cancel") d.state = "canceled";
+    if (a === "retry") { d.state = "progress"; d.received = 0; d.at = Date.now(); d.speed = d.size * (.035 + Math.random() * .03); }
+    if (a === "open") toast(`Opening ${d.name}`);
+    if (a === "folder") toast(`Showing ${d.name} in ${d.saveTo}`);
+    if (a === "remove") downloads.splice(downloads.indexOf(d), 1);
+    return renderDownloads();
+  }
+  if (e.target.closest("[data-dl-clear]")) {
+    for (let i = downloads.length - 1; i >= 0; i--) if (downloads[i].state !== "progress" && downloads[i].state !== "paused") downloads.splice(i, 1);
+    renderDownloads();
+  }
+  if (e.target.closest("[data-dl-all]")) { setDlPop(false); openDownloadsPage(); }
+});
+setInterval(() => {                                                   // simulated progress
+  let live = false;
+  downloads.forEach(d => {
+    if (d.state !== "progress") return;
+    live = true; d.received = Math.min(d.size, d.received + d.speed);
+    if (d.received >= d.size) { d.state = "done"; d.at = Date.now(); toast(`${d.name} downloaded`); }
+  });
+  if (live) renderDownloads();
+}, 400);
+
+/* ---------- Boot ---------- */
+tabs = [makeTab("tidepools.example/guide"), makeTab("newsroom.example/night-buses"), makeTab()];
+cur = tabs[0];
+applySettings(); app.classList.toggle("tabs-collapsed", settings.collapsed); renderAll(); setCopilot(settings.openAi);
+</script>
+</body>
+</html>

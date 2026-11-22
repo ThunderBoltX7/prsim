@@ -1,0 +1,143 @@
+:root {
+  --bg: #eceef4;
+  --panel: rgba(255, 255, 255, 0.7);
+  --panel-solid: #ffffff;
+  --hover: rgba(20, 24, 40, 0.06);
+  --line: rgba(20, 24, 40, 0.1);
+  --line-strong: rgba(20, 24, 40, 0.2);
+  --text: #1b1e29;
+  --muted: #667085;
+  --accent: #9fa8ff;
+  --accent-soft: rgba(159, 168, 255, 0.24);
+  --accent-ink: #12142e;
+  --font: "Segoe UI Variable Text", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --r-md: 10px;
+  --r-lg: 14px;
+}
+
+[data-theme="dark"],
+body.dark-mode {
+  --bg: #0a0a0a;
+  --panel: rgba(20, 20, 20, 0.75);
+  --panel-solid: #141414;
+  --hover: rgba(255, 255, 255, 0.08);
+  --line: rgba(255, 255, 255, 0.1);
+  --line-strong: rgba(255, 255, 255, 0.2);
+  --text: #ffffff;
+  --muted: #8e8e93;
+}
+
+body,
+html {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  font-family: var(--font);
+  background-color: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+*:focus {
+  outline-color: var(--accent);
+}
+
+.dark-mode *:focus {
+  outline-color: var(--accent);
+}
+
+body.dark-mode {
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+#page-wrapper {
+  width: 90%;
+  max-width: 580px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--panel-solid);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 2.25rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+h1 {
+  font-size: 2em;
+  font-family: var(--font);
+  font-weight: 650;
+  margin-bottom: 0.4em;
+  margin-top: 0;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+h2 {
+  font-size: 1.05em;
+  font-weight: 400;
+  margin-top: 0;
+  margin-bottom: 1.5em;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+button {
+  -webkit-appearance: none;
+  color: var(--text);
+  font-size: 0.95em;
+  font-weight: 500;
+  padding: 0.65em 1.25em;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  background-color: var(--panel-solid);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+button:hover {
+  background-color: var(--hover);
+  border-color: var(--text);
+}
+
+button.primary-button {
+  float: right;
+  background-color: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+button.primary-button:hover {
+  opacity: 0.88;
+}
+
+button.secondary-button {
+  float: left;
+  border: none;
+  background: none;
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 0.65em 0.5em;
+  margin-top: 0;
+}
+
+button.secondary-button:hover {
+  color: var(--text);
+  background: none;
+}
+
+a {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  opacity: 0.8;
+}

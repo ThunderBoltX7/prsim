@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' min:; font-src 'self' min: data:; connect-src * min:; img-src * data: blob: min:; base-uri 'none'; form-action 'none'" />
+
+    <title>Prism</title>
+
+    <script>
+      (function () {
+        try {
+          const s = JSON.parse(localStorage.getItem('drift-settings') || '{}')
+          const dark = s.theme === 'dark'
+          document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+          if (s.accent) {
+            document.documentElement.style.setProperty('--accent', s.accent)
+          }
+        } catch (e) {
+          document.documentElement.dataset.theme = 'light'
+        }
+      })()
+    </script>
+
+    <link rel="stylesheet" href="dist/bundle.css" />
+    <link rel="stylesheet" href="ext/icons/iconfont.css" />
+  </head>
+
+  <body>
+    <!-- SVG icon sprite -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+      <symbol id="i-fwd" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+      <symbol id="i-reload" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 4v5h-5"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+      <symbol id="i-sidebar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></symbol>
+      <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M15 4v16"/></symbol>
+      <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6L7 7M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4"/></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></symbol>
+      <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M19 7h1M4 17h3M13 17h7"/><circle cx="16" cy="7" r="2.5"/><circle cx="10" cy="17" r="2.5"/></symbol>
+      <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></symbol>
+      <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+      <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+      <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></symbol>
+    </svg>
+
+    <div class="window-drag-area"></div>
+
+    <div class="app" id="app">
+      <!-- ===== Vertical Tab Sidebar ===== -->
+      <aside class="tabs glass" id="tabs" aria-label="Tabs">
+        <div class="tabs-head">
+          <span class="brand">Prism</span>
+          <button class="icon-btn" id="toggleTabs" title="Collapse tabs (Alt+B)" aria-label="Collapse tab sidebar">
+            <svg class="i"><use href="#i-sidebar"/></svg>
+          </button>
+        </div>
+        <div class="tab-list has-thin-scrollbar" id="tabs-inner" role="tablist"></div>
+        <button class="new-tab" id="newTab" title="New tab (Alt+T)">
+          <svg class="i"><use href="#i-plus"/></svg><span>New tab</span>
+        </button>
+        <button class="new-tab flat" id="openDownloads" title="All downloads">
+          <svg class="i"><use href="#i-download"/></svg><span>Downloads</span>
+        </button>
+        <button class="new-tab flat" id="openSettings" title="Settings (Alt+,)">
+          <svg class="i"><use href="#i-sliders"/></svg><span>Settings</span>
+        </button>
+      </aside>
+
+      <div class="main">
+        <!-- ===== Toolbar: nav buttons + smart omnibox + co-pilot toggle ===== -->
+        <header class="toolbar glass" id="navbar">
+          <div id="mac-window-drag-area"></div>
+          <button class="icon-btn" id="back" title="Back" aria-label="Back">
+            <svg class="i"><use href="#i-back"/></svg>
+          </button>
+          <button class="icon-btn" id="fwd" title="Forward" aria-label="Forward">
+            <svg class="i"><use href="#i-fwd"/></svg>
+          </button>
+          <button class="icon-btn" id="reload" title="Reload" aria-label="Reload">
+            <svg class="i"><use href="#i-reload"/></svg>
+          </button>
+
+          <div class="omni" id="omni" data-mode="web">
+            <div class="mode" role="group" aria-label="Omnibox mode">
+              <button id="modeWeb" aria-pressed="true">Web</button>
+              <button id="modeAi" aria-pressed="false">Ask AI</button>
+            </div>
+            <input id="omnibox" type="text" spellcheck="false" autocomplete="off" aria-label="Address or AI prompt" placeholder="Search or enter address" />
+          </div>
+
+          <button class="icon-btn" id="toggleDl" title="Downloads (Alt+D)" aria-label="Downloads" aria-pressed="false" data-busy="false">
+            <svg class="i"><use href="#i-download"/></svg><span class="dot"></span>
+          </button>
+          <button class="icon-btn" id="toggleTheme" title="Switch theme" aria-label="Switch theme">
+            <svg class="i"><use href="#i-sun"/></svg>
+          </button>
+          <button class="icon-btn" id="toggleAi" title="AI co-pilot (Alt+J)" aria-label="Toggle AI co-pilot" aria-pressed="false">
+            <svg class="i"><use href="#i-panel"/></svg>
+          </button>
+
+          <!-- Windows Caption Buttons -->
+          <div class="windows-caption-buttons">
+            <div class="element caption-minimise" title="Minimize">
+              <svg><line x1="1" y1="5.5" x2="11" y2="5.5" /></svg>
+            </div>
+            <div class="element caption-maximize" title="Maximize">
+              <svg><rect x="1.5" y="1.5" width="9" height="9" /></svg>
+            </div>
+            <div class="element caption-restore" title="Restore" hidden>
+              <svg><rect x="1.5" y="3.5" width="7" height="7" /><polyline points="3.5,3.5 3.5,1.5 10.5,1.5 10.5,8.5 8.5,8.5" /></svg>
+            </div>
+            <div class="element caption-close" title="Close">
+              <svg><path d="M1,1 l 10,10 M1,11 l 10,-10" /></svg>
+            </div>
+          </div>
+        </header>
+
+        <div class="body">
+          <!-- Live Webview Viewport -->
+          <section class="viewport" id="viewport">
+            <div class="bar" id="bar"></div>
+            <div id="webviews">
+              <div id="leftArrowContainer" class="arrow-indicator">
+                <i id="leftArrow" class="i carbon:chevron-left"></i>
+              </div>
+              <div id="rightArrowContainer" class="arrow-indicator">
+                <i id="rightArrow" class="i carbon:chevron-right"></i>
+              </div>
+              <img id="webview-placeholder" hidden aria-hidden="true" />
+              <div id="ntp-content">
+                <div class="page" id="page">
+                  <div class="start">
+                    <h1 id="home-greeting">Where to?</h1>
+                    <div class="start-search">
+                      <input id="startSearch" type="text" spellcheck="false" autocomplete="off" placeholder="Where to, or what's on your mind?" aria-label="Where to, or what's on your mind?" />
+                      <button class="ghost" data-act="ask">Ask AI</button>
+                      <button class="solid" data-act="search">Search</button>
+                    </div>
+                    <div class="shortcuts-container" id="shortcutsContainer">
+                      <div class="shortcuts-grid" id="shortcutsGrid"></div>
+                    </div>
+                  </div>
+                </div>
+                <img id="ntp-background" hidden />
+                <div id="ntp-background-controls" style="display: none;">
+                  <button id="ntp-image-remove"><i class="i carbon:trash-can"></i></button>
+                  <button id="ntp-image-picker"><i class="i carbon:camera"></i></button>
+                </div>
+              </div>
+            </div>
+            <div class="readout" id="readout"></div>
+          </section>
+
+          <!-- ===== AI Co-pilot Drawer ===== -->
+          <aside class="copilot glass closed" id="copilot" aria-label="AI co-pilot" inert>
+            <div class="copilot-inner">
+              <div class="cp-head">
+                <div><strong>Co-pilot</strong><div class="ctx-sub" id="modelName">gpt-4o-mini</div></div>
+                <div class="cp-head-actions">
+                  <button class="icon-btn" id="clearChat" title="Clear chat history" aria-label="Clear chat history"><svg class="i"><use href="#i-trash"/></svg></button>
+                  <button class="icon-btn" id="closeAi" aria-label="Close co-pilot"><svg class="i"><use href="#i-x"/></svg></button>
+                </div>
+              </div>
+              <div class="ctx" id="ctx"></div>
+              <div class="chips">
+                <button class="chip" data-q="Summarize this page">Summarize Page</button>
+                <button class="chip" data-q="What are the key takeaways?">Key Takeaways</button>
+                <button class="chip" data-q="Explain this simply">Explain Simply</button>
+              </div>
+              <div class="feed" id="feed" aria-live="polite"></div>
+              <div class="composer">
+                <textarea id="input" rows="1" placeholder="Ask about this page" aria-label="Message the co-pilot"></textarea>
+                <button class="send" id="send" aria-label="Send" disabled><svg class="i"><use href="#i-up"/></svg></button>
+              </div>
+              <div class="foot" id="aiModelFoot">Connected to OpenAI-compatible API</div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Downloads Popover ===== -->
+    <section class="dl-pop glass" id="dlPop" aria-label="Recent downloads" inert>
+      <div class="dl-pop-head"><strong>Downloads</strong><button class="dl-btn" data-dl-all>Show all</button></div>
+      <div class="dl-pop-list" id="dlPopList"></div>
+      <div class="dl-pop-foot"><button class="dl-btn" data-dl-clear>Clear completed</button></div>
+    </section>
+    <div class="toast" id="toast" role="status"></div>
+
+    <!-- ===== Settings Dialog Scrim ===== -->
+    <div class="scrim" id="scrim" inert>
+      <section class="settings glass" role="dialog" aria-modal="true" aria-labelledby="stTitle">
+        <nav class="st-nav" id="stNav">
+          <h2 id="stTitle">Settings</h2>
+          <button data-pane="appearance" aria-current="true">General</button>
+          <button data-pane="search" aria-current="false">Search</button>
+          <button data-pane="downloads" aria-current="false">Downloads</button>
+          <button data-pane="ai" aria-current="false">AI & Models</button>
+          <button data-pane="keys" aria-current="false">Shortcuts</button>
+        </nav>
+        <div class="st-main">
+          <button class="icon-btn st-close" id="closeSettings" aria-label="Close settings"><svg class="i"><use href="#i-x"/></svg></button>
+          <div class="st-body">
+            <div class="pane" data-pane="appearance">
+              <h3>General & Appearance</h3>
+              <div class="row"><div>Your Name<small>Personalizes the New Tab greeting.</small></div>
+                <input class="txt-input" type="text" data-set="userName" id="userNameInput" placeholder="Your name (e.g. Alex)" aria-label="Your Name" /></div>
+              <div class="row"><div>Theme<small>System follows your OS setting.</small></div>
+                <select class="sel" data-set="theme" aria-label="Theme"><option value="dark">Dark</option><option value="light">Light</option><option value="system">System</option></select></div>
+              <div class="row"><div>Accent color<small>Used for AI mode, focus and active states.</small></div>
+                <div class="swatches" role="radiogroup" aria-label="Accent color">
+                  <button class="swatch" role="radio" data-set="accent" data-color="#9fa8ff" style="background:#9fa8ff" aria-label="Periwinkle"></button>
+                  <button class="swatch" role="radio" data-set="accent" data-color="#7fd1c4" style="background:#7fd1c4" aria-label="Mint"></button>
+                  <button class="swatch" role="radio" data-set="accent" data-color="#f0b37e" style="background:#f0b37e" aria-label="Amber"></button>
+                  <button class="swatch" role="radio" data-set="accent" data-color="#f19cc0" style="background:#f19cc0" aria-label="Rose"></button>
+                  <button class="swatch" role="radio" data-set="accent" data-color="#8cc7ff" style="background:#8cc7ff" aria-label="Sky"></button>
+                </div></div>
+              <div class="row"><div>Glass blur<small>Set to 0 for solid panels.</small></div><input type="range" min="0" max="40" data-set="blur" aria-label="Glass blur"></div>
+              <div class="row"><div>Start with tabs collapsed<small>Applies next launch.</small></div><button class="sw" role="switch" data-set="collapsed" aria-label="Start with tabs collapsed"></button></div>
+              <div class="row"><div>Show page-area size<small>Live size of the web area.</small></div><button class="sw" role="switch" data-set="readout" aria-label="Show page-area size"></button></div>
+              <div class="row"><div>Reduce motion<small>Turns off transitions and animations.</small></div><button class="sw" role="switch" data-set="calm" aria-label="Reduce motion"></button></div>
+            </div>
+
+            <div class="pane" data-pane="search" hidden>
+              <h3>Search</h3>
+              <div class="row"><div>Default search engine<small>Used by the omnibox and the new-tab search bar.</small></div>
+                <select class="sel" data-set="engine" aria-label="Default search engine">
+                  <option value="DuckDuckGo">DuckDuckGo</option>
+                  <option value="Google">Google</option>
+                  <option value="Brave">Brave Search</option>
+                  <option value="StartPage">Startpage</option>
+                  <option value="Bing">Bing</option>
+                </select></div>
+              <div class="row"><div>Search bar on new tab<small>Show a search box on the start page.</small></div><button class="sw" role="switch" data-set="startSearch" aria-label="Search bar on new tab"></button></div>
+            </div>
+
+            <div class="pane" data-pane="downloads" hidden>
+              <h3>Downloads</h3>
+              <div class="row"><div>Save files to<small>Applies to new downloads.</small></div>
+                <select class="sel" data-set="saveTo" aria-label="Save files to"><option value="Downloads">Downloads</option><option value="Desktop">Desktop</option><option value="Documents">Documents</option></select></div>
+              <div class="row"><div>Show panel when a download starts<small>Opens the toolbar downloads list.</small></div><button class="sw" role="switch" data-set="dlPopup" aria-label="Show panel when a download starts"></button></div>
+            </div>
+
+            <div class="pane" data-pane="ai" hidden>
+              <h3>AI & Models</h3>
+              <div class="row"><div>Enable AI Features<small>Master switch for Co-pilot and smart AI features.</small></div><button class="sw" role="switch" data-set="aiEnabled" id="aiEnabledSwitch" aria-label="Enable AI Features"></button></div>
+              <div class="row vertical">
+                <div class="row-label">API Base URL<small>OpenAI-compatible endpoint (OpenAI, OpenRouter, Ollama, LM Studio, Groq).</small></div>
+                <div class="preset-pills" role="group" aria-label="Provider presets">
+                  <button type="button" class="preset-pill" data-preset="openai">OpenAI</button>
+                  <button type="button" class="preset-pill" data-preset="openrouter">OpenRouter</button>
+                  <button type="button" class="preset-pill" data-preset="ollama">Local Ollama</button>
+                  <button type="button" class="preset-pill" data-preset="groq">Groq</button>
+                </div>
+                <input class="txt-input" type="text" data-set="aiBaseUrl" id="aiBaseUrlInput" placeholder="https://api.openai.com/v1 or http://localhost:11434/v1" aria-label="API Base URL" />
+              </div>
+              <div class="row vertical">
+                <div class="row-label">API Key<small>Stored locally on device. Optional for local Ollama.</small></div>
+                <div class="input-with-action">
+                  <input class="txt-input" type="password" data-set="aiApiKey" id="aiApiKeyInput" placeholder="sk-..." aria-label="API Key" />
+                  <button type="button" class="icon-btn-inline" id="toggleApiKeyVisibility" title="Show/Hide API Key" aria-label="Show or hide API key">
+                    <svg class="i" id="eyeIcon"><use href="#i-eye"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="row"><div>Model Name<small>Target model identifier (e.g. gpt-4o-mini or llama3).</small></div>
+                <input class="txt-input" type="text" data-set="aiModel" id="aiModelInput" placeholder="gpt-4o-mini or llama3" aria-label="Model Name" /></div>
+              <div class="row"><div>Test Connection<small>Send a lightweight test request to check credentials and connection.</small></div>
+                <div class="test-conn-wrapper">
+                  <button type="button" class="btn-subtle" id="btnTestAiConnection">Test Connection</button>
+                  <span class="status-badge" id="aiTestStatus" hidden></span>
+                </div>
+              </div>
+              <div class="row"><div>Use page as context<small>Allow Co-pilot to read visible text from the active tab.</small></div><button class="sw" role="switch" data-set="context" aria-label="Use page as context"></button></div>
+              <div class="row"><div>Open on launch<small>Show the co-pilot drawer when the browser starts.</small></div><button class="sw" role="switch" data-set="openAi" aria-label="Open co-pilot on launch"></button></div>
+            </div>
+
+            <div class="pane" data-pane="keys" hidden>
+              <h3>Shortcuts</h3>
+              <table class="keys">
+                <tr><td>New tab</td><td><kbd>Alt</kbd> <kbd>T</kbd></td></tr>
+                <tr><td>Close tab</td><td><kbd>Alt</kbd> <kbd>W</kbd></td></tr>
+                <tr><td>Focus omnibox</td><td><kbd>Alt</kbd> <kbd>L</kbd></td></tr>
+                <tr><td>Toggle co-pilot</td><td><kbd>Alt</kbd> <kbd>J</kbd></td></tr>
+                <tr><td>Toggle tab sidebar</td><td><kbd>Alt</kbd> <kbd>B</kbd></td></tr>
+                <tr><td>Show downloads</td><td><kbd>Alt</kbd> <kbd>D</kbd></td></tr>
+                <tr><td>Open settings</td><td><kbd>Alt</kbd> <kbd>,</kbd></td></tr>
+                <tr><td>Ask AI from the omnibox</td><td><kbd>?</kbd> then space</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ===== Add / Edit Shortcut Modal ===== -->
+    <div class="shortcut-scrim sc-scrim" id="shortcutScrim" hidden style="display: none;">
+      <div class="shortcut-dialog glass" role="dialog" aria-modal="true" aria-labelledby="shortcutModalTitle">
+        <div class="sc-head">
+          <h3 id="shortcutModalTitle">Add shortcut</h3>
+          <button class="icon-btn" id="closeShortcutModal" aria-label="Close dialog"><svg class="i"><use href="#i-x"/></svg></button>
+        </div>
+        <div class="sc-body">
+          <div class="sc-field">
+            <label for="scNameInput">Name</label>
+            <input type="text" id="scNameInput" class="txt-input" placeholder="e.g. YouTube" autocomplete="off" />
+          </div>
+          <div class="sc-field">
+            <label for="scUrlInput">URL</label>
+            <input type="text" id="scUrlInput" class="txt-input" placeholder="https://example.com" autocomplete="off" />
+          </div>
+          <div class="sc-error" id="scErrorMsg" hidden style="display: none;"></div>
+        </div>
+        <div class="sc-foot">
+          <button type="button" class="btn-subtle btn-danger" id="scDeleteBtn" hidden style="display: none;">Remove</button>
+          <div class="sc-spacer"></div>
+          <button type="button" class="btn-subtle" id="scCancelBtn">Cancel</button>
+          <button type="button" class="btn-primary" id="scSaveBtn">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preserved Min DOM Hooks & Functionality (hidden or styled appropriately) -->
+    <div id="searchbar" hidden class="theme-background-color theme-text-color">
+      <div class="top-answer-area"></div>
+    </div>
+
+    <div id="tab-editor" hidden>
+      <input id="tab-editor-input" spellcheck="false" />
+    </div>
+
+    <button id="menu-button" hidden class="navbar-action-button" data-label="openMenu" tabindex="-1"></button>
+    <div id="toolbar-navigation-buttons" hidden>
+      <button id="back-button" class="navbar-action-button" data-label="goBack" tabindex="-1"></button>
+      <button id="forward-button" class="navbar-action-button" data-label="goForward" tabindex="-1"></button>
+    </div>
+    <div class="navbar-right-actions" hidden>
+      <button id="add-tab-button" class="navbar-action-button" data-label="newTabAction" tabindex="-1"></button>
+    </div>
+    <button id="switch-task-button" hidden class="navbar-action-button" data-label="viewTasks" tabindex="-1"></button>
+    <button id="linux-control-buttons" hidden><svg><g id="minimize-button"></g><g id="maximize-button"></g><g id="close-button"></g></svg></button>
+
+    <div id="overlay" hidden></div>
+
+    <!-- findinpage ui -->
+    <div id="findinpage-bar" hidden class="theme-background-color theme-text-color">
+      <input id="findinpage-input" />
+      <span id="findinpage-count" class="inline-text"></span>
+      <div class="divider"></div>
+      <button id="findinpage-previous-match"><i class="i carbon:chevron-up navbar-action-button"></i></button>
+      <button id="findinpage-next-match"><i class="i carbon:chevron-down navbar-action-button"></i></button>
+      <div class="divider"></div>
+      <button id="findinpage-end"><i class="i carbon:close navbar-action-button"></i></button>
+    </div>
+
+    <div id="task-overlay" hidden tabindex="-1">
+      <div class="simulated-navbar windowDragHandle" id="task-overlay-navbar">
+        <div class="task-search-input-container">
+          <i class="i carbon:search"></i>
+          <input type="search" id="task-search-input"/>
+        </div>
+      </div>
+      <div id="task-area"></div>
+      <button id="add-task">
+        <i class="i carbon:new-tab"></i>
+        <span></span>
+      </button>
+    </div>
+
+    <div id="download-bar" hidden>
+      <div id="download-container" role="list" class="has-thin-scrollbar"></div>
+      <button id="download-close-button" class="i carbon:close"></button>
+    </div>
+
+    <div class="modal" id="manager-setup-dialog" hidden>
+      <h3 class="modal-title" id="manager-setup-heading"></h3>
+      <button id="manager-setup-close" class="modal-close-button i carbon:close"></button>
+      <div id="manager-setup-instructions-primary">
+        <div class="light-fade" data-string="passwordManagerSetupStep1" data-allowHTML></div>
+        <div class="spacer"></div>
+        <div class="light-fade" data-string="passwordManagerSetupStep2" data-allowHTML></div>
+      </div>
+      <div id="manager-setup-instructions-secondary">
+        <div class="light-fade" data-string="passwordManagerInstallerSetup" data-allowHTML></div>
+      </div>
+      <div class="spacer"></div>
+      <div id="manager-setup-drop-box" class="drag-and-drop-box" data-string="passwordManagerSetupDragBox"></div>
+      <div class="spacer"></div>
+      <div class="spacer"></div>
+      <div class="buttons">
+        <input type="button" id="manager-setup-disable" data-value="disableAutofill" />
+      </div>
+    </div>
+
+    <div id="password-capture-bar" hidden>
+      <span id="password-capture-description"></span>
+      <input id="password-capture-username" type="text" required />
+      <span class="password-capture-section">
+        <input id="password-capture-password" type="password" required />
+        <button id="password-capture-reveal-password" class="i carbon:view"></button>
+      </span>
+      <span class="password-capture-section">
+        <button id="password-capture-save" data-string="passwordCaptureSave"></button>
+        <button id="password-capture-ignore" data-string="passwordCaptureDontSave"></button>
+      </span>
+      <button id="password-capture-never-save" data-string="passwordCaptureNeverSave"></button>
+    </div>
+
+    <div id="password-viewer" class="modal" hidden>
+      <h2 class="modal-title" data-string="savedPasswordsHeading"></h2>
+      <button class="modal-close-button i carbon:close"></button>
+      <div id="password-viewer-empty" data-string="savedPasswordsEmpty" hidden></div>
+      <div id="password-viewer-list"></div>
+      <div id="password-viewer-import-container">
+        <button id="password-viewer-import"><span class="i carbon:document-import"></span><span data-string="importCredentials"></span></button>
+        <button id="password-viewer-export"><span class="i carbon:export"></span><span data-string="exportCredentials"></span></button>
+      </div>
+    </div>
+
+    <script src="dist/bundle.js"></script>
+  </body>
+</html>
