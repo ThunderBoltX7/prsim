@@ -81,23 +81,12 @@ function hasPendingRequestForOrigin (requestOrigin, permission, details) {
 }
 
 function pagePermissionRequestHandler (webContents, permission, callback, details) {
-  if (permission === 'fullscreen') {
+  if (permission === 'clipboard-sanitized-write' || permission === 'clipboard-read') {
     callback(true)
     return
   }
 
-  if (!details.isMainFrame) {
-    // not supported for now to simplify the UI
-    callback(false)
-    return
-  }
-
-  if (!details.requestingUrl) {
-    callback(false)
-    return
-  }
-
-  if (permission === 'clipboard-sanitized-write') {
+  if (permission === 'fullscreen') {
     callback(true)
     return
   }
@@ -206,6 +195,13 @@ function pagePermissionCheckHandler (webContents, permission, requestingOrigin, 
 app.once('ready', function () {
   session.defaultSession.setPermissionRequestHandler(pagePermissionRequestHandler)
   session.defaultSession.setPermissionCheckHandler(pagePermissionCheckHandler)
+  try {
+    const webcontentSession = session.fromPartition('persist:webcontent')
+    webcontentSession.setPermissionRequestHandler(pagePermissionRequestHandler)
+    webcontentSession.setPermissionCheckHandler(pagePermissionCheckHandler)
+  } catch (e) {
+    console.warn('Could not register permissions on persist:webcontent', e)
+  }
 })
 
 app.on('session-created', function (session) {

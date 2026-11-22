@@ -266,8 +266,13 @@ const defaultKeybindings = {
       webviews.callAsync(tabs.getSelected(), 'reloadIgnoringCache')
     })
 
-    keybindings.defineShortcut('showHistory', function () {
-      tabEditor.show(tabs.getSelected(), '!history ')
+    keybindings.defineShortcut('toggleMusic', function () {
+      try {
+        const musicPlayer = require('musicPlayer.js')
+        musicPlayer.toggle()
+      } catch (e) {
+        console.warn('Could not toggle music player:', e)
+      }
     })
 
     keybindings.defineShortcut('copyPageURL', function () {

@@ -1569,6 +1569,15 @@ function initializeDriftUI () {
           omnibox.select()
         }
       }
+      if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault()
+        try {
+          const musicPlayer = require('musicPlayer.js')
+          musicPlayer.toggle()
+        } catch (err) {
+          console.warn('Could not toggle music player:', err)
+        }
+      }
       if (e.key === 't' || e.key === 'T') {
         e.preventDefault()
         browserUI.addTab()

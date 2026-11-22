@@ -10,6 +10,44 @@ var enabledFilteringOptions = {
   exceptionDomains: []
 }
 
+// Critical Authentication & Bot-Verification Domains that must NEVER be blocked
+const authAndVerificationDomains = [
+  'recaptcha.net',
+  'google.com',
+  'gstatic.com',
+  'google-analytics.com',
+  'hcaptcha.com',
+  'challenges.cloudflare.com',
+  'cloudflare.com',
+  'turnstile.cloudflare.com',
+  'arkoselabs.com',
+  'accounts.google.com',
+  'appleid.apple.com',
+  'login.microsoftonline.com',
+  'login.live.com',
+  'github.com',
+  'facebook.com',
+  'twitter.com',
+  'x.com',
+  'discord.com',
+  'paypal.com',
+  'auth0.com',
+  'okta.com'
+]
+
+function isAuthOrVerificationRequest (url) {
+  if (!url) return false
+  try {
+    const parsed = new URL(url)
+    const hostname = parsed.hostname.toLowerCase()
+    return authAndVerificationDomains.some(domain => {
+      return hostname === domain || hostname.endsWith('.' + domain)
+    })
+  } catch (e) {
+    return false
+  }
+}
+
 const globalParamsToRemove = [
   // microsoft
   'msclkid',
@@ -49,6 +87,13 @@ const siteParamsToRemove = {
 
 // for tracking the number of blocked requests
 var unsavedBlockedRequests = 0
+var siteBlockedCounts = {} // domain -> count
+
+ipc.handle('getSiteBlockedCount', function (event, domain) {
+  if (!domain) return 0
+  const cleanDomain = removeWWW(domain)
+  return siteBlockedCounts[cleanDomain] || 0
+})
 
 setInterval(function () {
   if (unsavedBlockedRequests > 0) {
@@ -128,6 +173,11 @@ function filterPopups (url) {
     return true
   }
 
+  // Never filter popups from authentication or verification services
+  if (isAuthOrVerificationRequest(url)) {
+    return true
+  }
+
   const domain = parser.getUrlHost(url)
   if (enabledFilteringOptions.blockingLevel > 0 && !requestDomainIsException(domain)) {
     if (
@@ -147,6 +197,10 @@ function filterPopups (url) {
 function removeTrackingParams (url) {
   try {
     var urlObj = new URL(url)
+    // Never strip query parameters from auth or verification requests (OAuth state, code, tokens, etc.)
+    if (isAuthOrVerificationRequest(url)) {
+      return url
+    }
     for (const param of urlObj.searchParams) {
       if (globalParamsToRemove.includes(param[0]) ||
         (siteParamsToRemove[urlObj.hostname] &&
@@ -164,10 +218,24 @@ function removeTrackingParams (url) {
 function handleRequest (details, callback) {
   /* eslint-disable standard/no-callback-literal */
 
+  // Always allow auth and verification scripts/APIs (recaptcha, hcaptcha, cloudflare, etc.)
+  if (isAuthOrVerificationRequest(details.url)) {
+    callback({
+      cancel: false,
+      requestHeaders: details.requestHeaders
+    })
+    return
+  }
+
   // webContentsId may not exist if this request is a mainFrame or subframe
   let domain
   if (details.webContentsId) {
-    domain = parser.getUrlHost(webContents.fromId(details.webContentsId).getURL())
+    try {
+      const contents = webContents.fromId(details.webContentsId)
+      if (contents) {
+        domain = parser.getUrlHost(contents.getURL())
+      }
+    } catch (e) {}
   }
 
   const isExceptionDomain = domain && requestDomainIsException(domain)
@@ -209,6 +277,10 @@ function handleRequest (details, callback) {
       })
       if (matchesFilters) {
         unsavedBlockedRequests++
+        if (domain) {
+          const cleanDomain = removeWWW(domain)
+          siteBlockedCounts[cleanDomain] = (siteBlockedCounts[cleanDomain] || 0) + 1
+        }
 
         callback({
           cancel: true,
@@ -253,6 +325,12 @@ function registerFiltering (ses) {
 
 app.once('ready', function () {
   registerFiltering(session.defaultSession)
+  try {
+    const webcontentSession = session.fromPartition('persist:webcontent')
+    registerFiltering(webcontentSession)
+  } catch (e) {
+    console.warn('Could not register filtering on persist:webcontent', e)
+  }
 })
 
 app.on('session-created', registerFiltering)

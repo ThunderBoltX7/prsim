@@ -17,6 +17,35 @@ function createWebContentsView (preferences, contents) {
   return view
 }
 
+// Critical Auth hosts that require popup window mode for OAuth flows
+const oauthAuthHosts = [
+  'accounts.google.com',
+  'appleid.apple.com',
+  'login.microsoftonline.com',
+  'login.live.com',
+  'github.com',
+  'facebook.com',
+  'www.facebook.com',
+  'api.twitter.com',
+  'twitter.com',
+  'x.com',
+  'discord.com',
+  'paypal.com',
+  'auth0.com',
+  'okta.com'
+]
+
+function isAuthHost (url) {
+  if (!url) return false
+  try {
+    const parsed = new URL(url)
+    const hostname = parsed.hostname.toLowerCase()
+    return oauthAuthHosts.some(domain => hostname === domain || hostname.endsWith('.' + domain))
+  } catch (e) {
+    return false
+  }
+}
+
 function getDefaultViewWebPreferences () {
   return (
     {
@@ -30,7 +59,7 @@ function getDefaultViewWebPreferences () {
       sandbox: true,
       enableRemoteModule: false,
       allowPopups: false,
-      // partition: partition || 'persist:webcontent',
+      partition: 'persist:webcontent',
       enableWebSQL: false,
       autoplayPolicy: (settings.get('enableAutoplay') ? 'no-user-gesture-required' : 'user-gesture-required'),
       // match Chrome's default for anti-fingerprinting purposes (Electron defaults to 0)
@@ -96,6 +125,25 @@ function createView (existingViewId, id, webPreferences, boundsString, events) {
       }
     }
 
+    const isAuth = isAuthHost(details.url)
+    const hasFeatures = Boolean(details.features && details.features.trim().length > 0)
+
+    // For auth hosts or popup features, allow native BrowserWindow popup with opener support
+    if (isAuth || hasFeatures) {
+      return {
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+          width: 500,
+          height: 700,
+          autoHideMenuBar: true,
+          webPreferences: {
+            ...getDefaultViewWebPreferences(),
+            partition: 'persist:webcontent'
+          }
+        }
+      }
+    }
+
     /*
       Opening a popup with window.open() generally requires features to be set
       So if there are no features, the event is most likely from clicking on a link, which should open a new tab.
@@ -103,7 +151,7 @@ function createView (existingViewId, id, webPreferences, boundsString, events) {
       when it is clicked.
       (https://github.com/minbrowser/min/issues/1835)
     */
-    if (details.url && details.url !== 'about:blank' && !details.features) {
+    if (details.url && details.url !== 'about:blank') {
       const eventTarget = getWindowFromViewContents(view.webContents) || windows.getCurrent()
 
       getWindowWebContents(eventTarget).send('view-event', {
@@ -118,21 +166,14 @@ function createView (existingViewId, id, webPreferences, boundsString, events) {
 
     return {
       action: 'allow',
-      createWindow: function (options) {
-        const view = createWebContentsView(getDefaultViewWebPreferences(), options.webContents)
-
-        var popupId = Math.random().toString()
-        temporaryPopupViews[popupId] = view
-
-        const eventTarget = getWindowFromViewContents(view.webContents) || windows.getCurrent()
-
-        getWindowWebContents(eventTarget).send('view-event', {
-          tabId: id,
-          event: 'did-create-popup',
-          args: [popupId, details.url]
-        })
-
-        return view.webContents
+      overrideBrowserWindowOptions: {
+        width: 500,
+        height: 700,
+        autoHideMenuBar: true,
+        webPreferences: {
+          ...getDefaultViewWebPreferences(),
+          partition: 'persist:webcontent'
+        }
       }
     }
   })

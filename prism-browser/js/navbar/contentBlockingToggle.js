@@ -1,6 +1,7 @@
 const webviews = require('webviews.js')
 const settings = require('util/settings/settings.js')
 const remoteMenu = require('remoteMenuRenderer.js')
+const { ipcRenderer: ipc } = require('electron')
 
 const contentBlockingToggle = {
   enableBlocking: function (url) {
@@ -60,10 +61,22 @@ const contentBlockingToggle = {
 
     return button
   },
-  showMenu: function (button) {
+  showMenu: async function (button) {
     var url = tabs.get(tabs.getSelected()).url
+    let blockedCount = 0
+    try {
+      const domain = new URL(url).hostname
+      blockedCount = await ipc.invoke('getSiteBlockedCount', domain)
+    } catch (e) {}
+
+    var countLabel = blockedCount > 0 ? `Shields: ${blockedCount} items blocked` : 'Shields: No items blocked'
+
     var menu = [
       [
+        {
+          label: countLabel,
+          enabled: false
+        },
         {
           type: 'checkbox',
           label: l('enableBlocking'),

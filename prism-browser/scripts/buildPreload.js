@@ -4,13 +4,14 @@ const fs = require('fs')
 const outFile = path.resolve(__dirname, '../dist/preload.js')
 
 const modules = [
+  'js/preload/chromeFingerprint.js',
   'js/preload/default.js',
   'js/preload/textExtractor.js',
   'js/preload/readerDetector.js',
   'js/preload/siteUnbreak.js',
   'js/util/settings/settingsPreload.js',
   'js/preload/passwordFill.js',
-  'js/preload/translate.js',
+  'js/preload/translate.js'
 ]
 
 function buildPreload() {

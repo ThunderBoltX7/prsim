@@ -3,6 +3,7 @@
 var webviews = require('webviews.js')
 const searchEngine = require('util/searchEngine.js')
 const urlParser = require('util/urlParser.js')
+const settings = require('util/settings/settings.js')
 
 const places = {
   messagePort: null,
@@ -76,21 +77,37 @@ const places = {
       data.extractedText = ''
     }
 
-    // don't save to history if in private mode, or the page is a browser page (unless it contains the content of a normal page)
-    if (tab.private === false && !isNonIndexableInternalPage) {
+    // don't save to history if in private mode, history saving is disabled, or the page is a browser page (unless it contains the content of a normal page)
+    if (tab.private === false && !isNonIndexableInternalPage && settings.get('saveBrowsingHistory') !== false) {
       places.savePage(tabId, data.extractedText)
     }
   },
   deleteHistory: function (url) {
-    places.sendMessage({
+    return places.invokeWithPromise({
       action: 'deleteHistory',
       pageData: {
         url: url
       }
     })
   },
+  deleteHistoryByDomain: function (domain) {
+    return places.invokeWithPromise({
+      action: 'deleteHistoryByDomain',
+      pageData: {
+        domain: domain
+      }
+    })
+  },
+  deleteHistoryRange: function (range) {
+    return places.invokeWithPromise({
+      action: 'deleteHistoryRange',
+      pageData: {
+        range: range
+      }
+    })
+  },
   deleteAllHistory: function () {
-    places.sendMessage({
+    return places.invokeWithPromise({
       action: 'deleteAllHistory'
     })
   },

@@ -2131,3 +2131,587 @@ body.calm * {
   border-color: #ff453a !important;
   color: #ff453a !important;
 }
+
+/* =========================================================
+   DOCK MINI-PLAYER (DOCKED AT BOTTOM OF VERTICAL SIDEBAR)
+   ========================================================= */
+.mini-player {
+  margin-top: auto;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: var(--r-md);
+  background: var(--fill-1);
+  border: 1px solid var(--line);
+  transition: background .15s, border-color .15s;
+  overflow: hidden;
+  user-select: none;
+}
+
+.mini-player:hover {
+  background: var(--fill-2);
+  border-color: var(--line-strong);
+}
+
+.mp-art {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  border-radius: var(--r-sm);
+  background: var(--fill-2);
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.mp-art-placeholder {
+  width: 16px;
+  height: 16px;
+  stroke: var(--muted);
+}
+
+.mp-art-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.mp-info {
+  flex: 1 1 0%;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.mp-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.25;
+}
+
+.mp-artist {
+  font-size: 10.5px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.25;
+}
+
+.mp-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+}
+
+.icon-btn-tiny {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background .12s, color .12s;
+  padding: 0;
+}
+
+.icon-btn-tiny:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.icon-btn-tiny .i {
+  width: 12px;
+  height: 12px;
+  stroke: currentColor;
+}
+
+.icon-btn-tiny.mp-play {
+  color: var(--text);
+}
+
+/* Collapsed tab sidebar mode for mini-player */
+.app.tabs-collapsed .mini-player {
+  padding: 6px 0;
+  justify-content: center;
+}
+
+.app.tabs-collapsed .mini-player .mp-info,
+.app.tabs-collapsed .mini-player .mp-controls {
+  display: none !important;
+}
+
+.app.tabs-collapsed .mini-player .mp-art {
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+}
+
+/* =========================================================
+   SLIDE-OVER PANELS (HISTORY & MUSIC PLAYER)
+   High performance: contain: content, content-visibility: auto,
+   transform animations, solid translucent list backgrounds.
+   ========================================================= */
+.slide-panel {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  right: 8px;
+  width: 380px;
+  max-width: calc(100vw - 80px);
+  z-index: 1000;
+  border-radius: var(--r-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--line-strong);
+  transition: transform .26s var(--ease), opacity .2s;
+  will-change: transform, opacity;
+  contain: content;
+  content-visibility: auto;
+}
+
+.slide-panel.closed {
+  transform: translateX(calc(100% + 16px));
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.sp-inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--panel-solid);
+}
+
+.sp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  flex: none;
+}
+
+.sp-title-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--text);
+}
+
+.sp-title-icon {
+  width: 17px;
+  height: 17px;
+  stroke: var(--accent);
+}
+
+.sp-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sp-search-bar {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  flex: none;
+}
+
+.sp-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: var(--r-md);
+  background: var(--inset);
+  border: 1px solid var(--line);
+  transition: border-color .15s;
+}
+
+.sp-search-box:focus-within {
+  border-color: var(--accent);
+}
+
+.sp-search-box .i {
+  width: 14px;
+  height: 14px;
+  stroke: var(--muted);
+  flex: none;
+}
+
+.sp-search-box input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  outline: none;
+  font: 13px var(--font);
+  color: var(--text);
+}
+
+/* Source tabs (Trending | Search | Radio | Favorites | Queue) */
+.sp-tabs {
+  display: flex;
+  padding: 6px 12px;
+  gap: 4px;
+  border-bottom: 1px solid var(--line);
+  background: var(--fill-1);
+  flex: none;
+  overflow-x: auto;
+}
+
+.sp-tab {
+  padding: 5px 10px;
+  border-radius: var(--r-sm);
+  background: none;
+  border: none;
+  font: 12px var(--font);
+  font-weight: 550;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background .12s, color .12s;
+  white-space: nowrap;
+}
+
+.sp-tab:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.sp-tab[aria-selected="true"] {
+  background: var(--panel-solid);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* List Container (Solid translucent background, no expensive backdrop-filter) */
+.sp-list-container {
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow-y: auto;
+  position: relative;
+  background: var(--panel-solid);
+  contain: strict;
+}
+
+.sp-virtual-phantom {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.sp-list-content {
+  position: relative;
+  z-index: 1;
+  padding: 6px 0;
+}
+
+.sp-empty, .sp-loader {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Music Track Row Styles */
+.music-item-row {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  transition: background .1s;
+  border-bottom: 1px solid var(--line);
+}
+
+.music-item-row:hover {
+  background: var(--hover);
+}
+
+.music-item-row.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.music-item-art {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border-radius: var(--r-sm);
+  background: var(--fill-2);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.music-item-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.music-item-details {
+  flex: 1 1 0%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.music-item-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.25;
+}
+
+.music-item-subtitle {
+  font-size: 11px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.music-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+}
+
+.music-btn-fav.active {
+  color: #ff3b30 !important;
+}
+
+.music-btn-fav.active .i {
+  fill: #ff3b30;
+  stroke: #ff3b30;
+}
+
+/* Bottom Player Dock inside Music Panel */
+.mp-dock-panel {
+  flex: none;
+  background: var(--panel-solid);
+  border-top: 1px solid var(--line);
+  padding: 10px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mp-seek-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mp-time {
+  font-size: 10.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  flex: none;
+  width: 30px;
+}
+
+.mp-seek-row .mp-time:last-child {
+  text-align: right;
+}
+
+.mp-seek-bar {
+  flex: 1;
+  height: 4px;
+  appearance: none;
+  background: var(--line-strong);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.mp-seek-bar::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--text);
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.mp-dock-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mp-dock-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 0%;
+  min-width: 0;
+}
+
+.mp-art-sm {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  border-radius: var(--r-sm);
+  background: var(--fill-2);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.mp-dock-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mp-dock-titles {
+  flex: 1 1 0%;
+  min-width: 0;
+}
+
+.mp-dock-title {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.mp-dock-artist {
+  font-size: 10.5px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.mp-dock-btns {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+
+.icon-btn-sm {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background .12s, color .12s;
+  padding: 0;
+}
+
+.icon-btn-sm:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.icon-btn-sm.active {
+  color: var(--accent);
+}
+
+.icon-btn-sm .i {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+}
+
+.icon-btn-play {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--text);
+  border: none;
+  color: var(--bg);
+  cursor: pointer;
+  transition: transform .12s, opacity .12s;
+  padding: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.icon-btn-play:hover {
+  opacity: .9;
+  transform: scale(1.04);
+}
+
+.icon-btn-play:active {
+  transform: scale(0.96);
+}
+
+.icon-btn-play .i {
+  width: 15px;
+  height: 15px;
+  stroke: currentColor;
+}
+
+.mp-dock-vol {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 85px;
+}
+
+.mp-vol-slider {
+  width: 60px;
+  height: 4px;
+  appearance: none;
+  background: var(--line-strong);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.mp-vol-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text);
+  cursor: pointer;
+}
+

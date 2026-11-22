@@ -21,8 +21,8 @@ function calculateHistoryScore (item) { // item.boost - how much the score shoul
 
 const oneDayInMS = 24 * 60 * 60 * 1000 // one day in milliseconds
 
-// the oldest an item can be to remain in the database
-const maxItemAge = oneDayInMS * 42
+// the oldest an item can be to remain in the database (capped at 90 days)
+const maxItemAge = oneDayInMS * 90
 
 function cleanupHistoryDatabase () { // removes old history entries
   db.places.where('lastVisit').below(Date.now() - maxItemAge).and(function (item) {
@@ -195,6 +195,51 @@ function handleRequest (data, cb) {
     db.places.where('url').equals(pageData.url).delete()
 
     removeFromHistoryCache(pageData.url)
+    if (cb) {
+      cb({ result: true, callbackId: callbackId })
+    }
+  }
+
+  if (action === 'deleteHistoryByDomain') {
+    const domain = pageData.domain
+    db.places.filter(function (item) {
+      try {
+        const u = new URL(item.url)
+        return u.hostname === domain || u.hostname === 'www.' + domain
+      } catch (e) {
+        return false
+      }
+    }).delete().then(function () {
+      loadHistoryInMemory()
+      if (cb) {
+        cb({ result: true, callbackId: callbackId })
+      }
+    })
+  }
+
+  if (action === 'deleteHistoryRange') {
+    // range: lastHour, lastDay, lastWeek, all
+    const range = pageData.range
+    let cutoff = 0
+    const now = Date.now()
+    if (range === 'lastHour') {
+      cutoff = now - (60 * 60 * 1000)
+    } else if (range === 'lastDay') {
+      cutoff = now - (24 * 60 * 60 * 1000)
+    } else if (range === 'lastWeek') {
+      cutoff = now - (7 * 24 * 60 * 60 * 1000)
+    } else if (range === 'all') {
+      cutoff = 0
+    }
+
+    db.places.filter(function (item) {
+      return (cutoff === 0 || item.lastVisit >= cutoff) && item.isBookmarked === false
+    }).delete().then(function () {
+      loadHistoryInMemory()
+      if (cb) {
+        cb({ result: true, callbackId: callbackId })
+      }
+    })
   }
 
   if (action === 'deleteAllHistory') {
@@ -202,6 +247,9 @@ function handleRequest (data, cb) {
       return item.isBookmarked === false
     }).delete().then(function () {
       loadHistoryInMemory()
+      if (cb) {
+        cb({ result: true, callbackId: callbackId })
+      }
     })
   }
 

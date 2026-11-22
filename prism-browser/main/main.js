@@ -564,3 +564,28 @@ app.on('ready', function() {
     })
   })
 })
+
+/* Certificate error handling: warn user with interstitial dialog instead of silently accepting */
+app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
+  event.preventDefault()
+  try {
+    const parsedUrl = new URL(url)
+    const result = dialog.showMessageBoxSync({
+      type: 'warning',
+      buttons: ['Go back to safety (Recommended)', 'Continue anyway (Unsafe)'],
+      defaultId: 0,
+      cancelId: 0,
+      title: 'Certificate Security Warning',
+      message: `Your connection to ${parsedUrl.hostname} is not private.`,
+      detail: `The security certificate presented by the server has an error: ${error}.\nAttackers might be trying to steal your information from ${parsedUrl.hostname} (for example, passwords, messages, or credit cards).`
+    })
+
+    if (result === 1) {
+      callback(true)
+    } else {
+      callback(false)
+    }
+  } catch (e) {
+    callback(false)
+  }
+})

@@ -2,7 +2,7 @@
   "name": "prism",
   "productName": "Prism",
   "author": "Mayank Ojha",
-  "version": "1.35.9",
+  "version": "1.4.0",
   "description": "Prism - A fast, modern browser with built-in AI sidekick, vertical tabs, customizable themes, and enhanced privacy",
   "electronVersion": "45.3.2",
   "main": "main.build.js",

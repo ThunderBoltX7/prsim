@@ -50,6 +50,15 @@ Whether you're doing in-depth research, coding, or everyday browsing, Prism gets
 - **Automatic Reader View**: Strip away page clutter, ads, and formatting to read articles in clean typography.
 - **No Telemetry**: Your browsing history, AI keys, and preferences stay strictly on your local machine.
 
+### 🎵 Built-in Music Player (`Alt+M`)
+- **Docked Mini-Player**: An ambient mini-player embedded right into the bottom of the vertical sidebar with track artwork, title/artist info, and quick previous/play/next controls.
+- **Full Slide-Over Music Studio**: Expandable glassmorphic panel with 5 dedicated source views: **Trending**, **Search**, **Radio**, **Favorites**, and **Queue**.
+- **Legal & Free Audio Streaming**:
+  - **Audius API**: Stream trending indie tracks, electronic music, and search global music catalogs completely DRM-free.
+  - **Radio Browser API**: Discover and tune into thousands of live worldwide radio stations categorized by genre, tag, or country.
+- **Audio Persistence Across Tabs**: Engineered with a single `<audio>` element mounted in the renderer shell, allowing uninterrupted music and radio playback while switching, closing, or navigating tabs.
+- **Hardware Media Key & OS Integration**: Implements the `navigator.mediaSession` API with track metadata, playback status, and Windows system media overlay synchronization.
+
 ---
 
 ## ⌨ Keyboard Shortcuts
@@ -57,8 +66,9 @@ Whether you're doing in-depth research, coding, or everyday browsing, Prism gets
 | Shortcut | Action |
 | :--- | :--- |
 | `Alt + B` | Toggle / Collapse vertical tab sidebar |
+| `Alt + M` | Open / Close Music Player panel |
 | `Alt + T` / `Ctrl + T` | Open a new tab |
-| `Ctrl + W` | Close the current tab |
+| `Ctrl + W` / `Alt + W` | Close the current tab |
 | `Ctrl + Tab` / `Ctrl + Shift + Tab` | Cycle forward / backward through tabs |
 | `Alt + D` | Toggle Downloads drawer |
 | `Alt + ,` | Open Prism Settings modal |
