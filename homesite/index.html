@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prism — Ambient, AI-Native Browser</title>
+  <meta name="description" content="A fast, modern web browser with built-in multi-LLM AI sidekick, ergonomic vertical tabs, and uncompromising privacy.">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header class="header">
+    <div class="container nav">
+      <a href="#" class="brand">
+        <img src="prism-icon.png" alt="Prism Logo">
+        <span>Prism</span>
+        <span class="brand-badge">v1.35.9</span>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#copilot">AI Sidekick</a></li>
+        <li><a href="#workflow">Ergonomics</a></li>
+        <li><a href="#shortcuts">Shortcuts</a></li>
+        <li><a href="https://github.com/ThunderBoltX7/prsim" target="_blank">GitHub</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <a href="#download" class="btn btn-primary btn-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Download
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="pill-tag">
+        <span class="dot"></span>
+        Prism Browser 1.35.9 Released with NSIS Custom Setup
+      </div>
+
+      <h1>Engineered for focus.<br>Driven by ambient AI.</h1>
+
+      <p>
+        Replace bloated browser clutter with a glassmorphic vertical tab architecture,
+        instant multi-model AI copilot, and native ad & tracker defense.
+      </p>
+
+      <div class="hero-cta">
+        <a href="#download" class="btn btn-primary btn-lg">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Download for Windows (x64)
+        </a>
+        <a href="https://github.com/ThunderBoltX7/prsim" target="_blank" class="btn btn-secondary btn-lg">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+          </svg>
+          View Source Code
+        </a>
+      </div>
+
+      <div class="hero-meta">
+        Windows 10/11 &bull; 64-bit &bull; Apache-2.0 Open Source
+      </div>
+
+      <!-- App Interface Mockup -->
+      <div class="preview-container">
+        <div class="preview-glow"></div>
+        <div class="window-mockup">
+          <div class="window-topbar">
+            <div class="window-traffic">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="window-search">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <span>Search or ask AI with omnibox...</span>
+            </div>
+            <div class="window-chips">
+              <span class="window-chip">Web</span>
+              <span class="window-chip">Ask AI</span>
+            </div>
+          </div>
+
+          <div class="window-body">
+            <!-- Sidebar -->
+            <div class="mock-sidebar">
+              <div class="mock-tab active">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                <span>New Tab</span>
+              </div>
+              <div class="mock-tab">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <span>GitHub — prsim</span>
+              </div>
+              <div class="mock-tab">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                <span>AI Documentation</span>
+              </div>
+            </div>
+
+            <!-- Main New Tab View -->
+            <div class="mock-content">
+              <div class="mock-ambient-clock" id="liveClock">10:42 AM</div>
+              <div class="mock-ambient-greeting">Working late? Let's build something brilliant.</div>
+              <div class="mock-search-box">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <span>Search DuckDuckGo or paste URL...</span>
+              </div>
+              <div class="mock-shortcuts">
+                <div class="mock-shortcut-item">GH</div>
+                <div class="mock-shortcut-item">YT</div>
+                <div class="mock-shortcut-item">AI</div>
+                <div class="mock-shortcut-item">+</div>
+              </div>
+            </div>
+
+            <!-- Copilot Sidekick -->
+            <div class="mock-copilot">
+              <div class="mock-copilot-header">
+                <span>AI Sidekick</span>
+                <span style="font-size: 10px; color: var(--text-dim);">Llama 3.1 / GPT-4o</span>
+              </div>
+              <div class="mock-chat-bubble user">
+                Can you summarize the active page and extract key formulas?
+              </div>
+              <div class="mock-chat-bubble ai">
+                Analyzing the active tab...<br><br>
+                <strong>Summary:</strong> The page details the architecture of modern web browsers with vertical tab ergonomical layouts and ambient copilot hooks.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Core Features -->
+  <section class="section" id="features">
+    <div class="container">
+      <span class="section-tag">Core Architecture</span>
+      <h2 class="section-title">Designed for zero digital distraction</h2>
+      <p class="section-desc">Traditional browsers waste vertical screen space with tabs and buttons. Prism reimagines the layout for widescreen focus.</p>
+
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+          </div>
+          <h3>Vertical Tabs</h3>
+          <p>Read page titles completely without squeezing tabs into unreadable icons. Collapse to an ultra-thin rail with <code>Alt+B</code>.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          </div>
+          <h3>Native Tracker Blocking</h3>
+          <p>Integrated EasyList and EasyPrivacy engines eliminate ad-trackers, telemetry scripts, and malware vectors before they resolve.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h3>Zero Local Telemetry</h3>
+          <p>Your history, bookmarks, passwords, and private AI keys never leave your machine. No mandatory accounts, no cloud sync traps.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Copilot Deep Dive -->
+  <section class="section" id="copilot" style="border-top: 1px solid var(--line);">
+    <div class="container">
+      <div class="highlight-box">
+        <div>
+          <span class="section-tag">AI Copilot</span>
+          <h2 class="section-title">Your multi-model companion in the browser</h2>
+          <p class="section-desc">
+            Prism connects directly to your preferred AI provider. Extract insights from research papers, translate languages,
+            or draft responses with live webpage context.
+          </p>
+          <div class="pill-list">
+            <span>OpenAI (GPT-4o)</span>
+            <span>Groq (Ultra-Fast)</span>
+            <span>OpenRouter</span>
+            <span>Ollama (100% Offline)</span>
+            <span>Markdown Highlighting</span>
+          </div>
+        </div>
+        <div class="card" style="margin: 0; background: #0c0e13;">
+          <h4 style="font-size: 14px; margin-bottom: 12px; font-weight: 600;">Omnibox Dual Mode</h4>
+          <p style="font-size: 13px; margin-bottom: 16px;">
+            Switch between traditional web address searching and interactive AI dialog with one shortcut or click.
+          </p>
+          <div style="background: rgba(255,255,255,0.06); padding: 12px; border-radius: 8px; font-family: var(--font-mono); font-size: 12px;">
+            <span style="color: #888;">// Prompting active page context</span><br>
+            <span style="color: #fff;">@page summarize the conclusion section in 3 bullet points</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Keyboard Shortcuts & Power Workflows -->
+  <section class="section" id="shortcuts" style="border-top: 1px solid var(--line);">
+    <div class="container">
+      <span class="section-tag">Speed & Control</span>
+      <h2 class="section-title">Keyboard-driven efficiency</h2>
+      <p class="section-desc">Keep your hands on the keys. Every core navigation workflow has an ergonomic shortcut.</p>
+
+      <table class="spec-table">
+        <thead>
+          <tr>
+            <th>Shortcut</th>
+            <th>Action</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>Alt + B</code></td>
+            <td>Toggle Sidebar</td>
+            <td>Instantly collapse or expand the vertical tab bar into a minimalist rail.</td>
+          </tr>
+          <tr>
+            <td><code>Ctrl + T</code> / <code>Alt + T</code></td>
+            <td>New Tab</td>
+            <td>Launch the ambient greeting home view with instant search.</td>
+          </tr>
+          <tr>
+            <td><code>Ctrl + W</code></td>
+            <td>Close Tab</td>
+            <td>Close the current active view.</td>
+          </tr>
+          <tr>
+            <td><code>Ctrl + Tab</code></td>
+            <td>Cycle Tabs</td>
+            <td>Fluidly switch through open workspaces and tabs.</td>
+          </tr>
+          <tr>
+            <td><code>Alt + D</code></td>
+            <td>Downloads Drawer</td>
+            <td>Slide out the download management drawer.</td>
+          </tr>
+          <tr>
+            <td><code>Alt + ,</code></td>
+            <td>Settings Modal</td>
+            <td>Access theme, AI API key configuration, and search engine settings.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Download CTA -->
+  <section class="section" id="download" style="border-top: 1px solid var(--line);">
+    <div class="container">
+      <div class="download-box">
+        <span class="section-tag">Get Started</span>
+        <h2 class="section-title">Experience the modern web with Prism</h2>
+        <p class="section-desc" style="margin: 0 auto;">
+          Download version 1.35.9 installer with customizable folder selection, desktop icon placement, and Start Menu integration.
+        </p>
+
+        <div class="download-options">
+          <a href="https://github.com/ThunderBoltX7/prsim/releases" target="_blank" class="btn btn-primary btn-lg">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Download prism-1.35.9-setup.exe
+          </a>
+          <a href="https://github.com/ThunderBoltX7/prsim" target="_blank" class="btn btn-secondary btn-lg">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            Star on GitHub
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+      <div>&copy; 2026 Prism Browser. Released under Apache-2.0 License.</div>
+      <div class="footer-links">
+        <a href="https://github.com/ThunderBoltX7/prsim" target="_blank">Repository</a>
+        <a href="https://github.com/ThunderBoltX7/prsim/issues" target="_blank">Issues</a>
+        <a href="https://github.com/ThunderBoltX7/prsim/blob/main/LICENSE" target="_blank">License</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function updateClock() {
+      const now = new Date();
+      let hours = now.getHours();
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      const el = document.getElementById('liveClock');
+      if (el) {
+        el.innerText = `${hours}:${minutes} ${ampm}`;
+      }
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+  </script>
+</body>
+</html>
